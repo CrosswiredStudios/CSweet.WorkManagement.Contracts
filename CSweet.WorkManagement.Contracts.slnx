@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/CSweet.WorkManagement.Contracts/CSweet.WorkManagement.Contracts.csproj" />
+  <Project Path="tests/CSweet.WorkManagement.Contracts.Tests/CSweet.WorkManagement.Contracts.Tests.csproj" />
+</Solution>
