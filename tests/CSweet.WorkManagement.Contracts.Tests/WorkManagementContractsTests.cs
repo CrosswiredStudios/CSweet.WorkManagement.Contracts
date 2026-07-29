@@ -31,4 +31,13 @@ public sealed class WorkManagementContractsTests
     {
         Assert.StartsWith("work.", capability, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void WorkVocabulary_UsesStableStringValues()
+    {
+        Assert.Equal("Task", WorkItemKinds.Task);
+        Assert.Equal("Critical", WorkPriorities.Critical);
+        Assert.Equal("Backlog", WorkStatuses.Backlog);
+        Assert.Equal("WaitingForApproval", WorkStatuses.WaitingForApproval);
+    }
 }

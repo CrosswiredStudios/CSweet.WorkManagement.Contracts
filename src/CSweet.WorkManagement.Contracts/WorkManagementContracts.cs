@@ -53,6 +53,18 @@ public static class WorkPriorities
     public const string Critical = "Critical";
 }
 
+public static class WorkStatuses
+{
+    public const string Backlog = "Backlog";
+    public const string Ready = "Ready";
+    public const string Assigned = "Assigned";
+    public const string Running = "Running";
+    public const string WaitingForApproval = "WaitingForApproval";
+    public const string Completed = "Completed";
+    public const string Failed = "Failed";
+    public const string Cancelled = "Cancelled";
+}
+
 public static class WorkAutomationOperations
 {
     public const string Create = "Create";
@@ -131,7 +143,7 @@ public sealed record CarryOverWorkSprintRequest(
 public sealed record WorkSprintCarryOver(
     Guid SourceSprintId, Guid TargetSprintId, IReadOnlyList<Guid> ItemIds, decimal CarriedPoints);
 public sealed record WorkSprintSnapshotItem(
-    Guid ItemId, string Kind, string Title, int Status,
+    Guid ItemId, string Kind, string Title, string Status,
     decimal? EstimatePoints, bool Completed);
 public sealed record WorkSprintSnapshot(
     Guid Id, Guid SprintId, string SprintName, string Goal,
