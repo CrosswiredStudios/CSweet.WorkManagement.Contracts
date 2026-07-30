@@ -24,6 +24,7 @@ public sealed class WorkManagementContractsTests
 
     [Theory]
     [InlineData(WorkManagementCapabilityNames.BoardRead)]
+    [InlineData(WorkManagementCapabilityNames.ItemStart)]
     [InlineData(WorkManagementCapabilityNames.ItemComplete)]
     [InlineData(WorkManagementCapabilityNames.SprintCarryOver)]
     [InlineData(WorkManagementCapabilityNames.AutomationManage)]
@@ -39,5 +40,29 @@ public sealed class WorkManagementContractsTests
         Assert.Equal("Critical", WorkPriorities.Critical);
         Assert.Equal("Backlog", WorkStatuses.Backlog);
         Assert.Equal("WaitingForApproval", WorkStatuses.WaitingForApproval);
+        Assert.Equal("work.item.assigned.v1", WorkItemEvents.Assigned);
+    }
+
+    [Fact]
+    public void DevelopmentAssignmentContracts_CarryStructuredAuthority()
+    {
+        var installationId = Guid.NewGuid();
+        var connectionId = Guid.NewGuid();
+        var request = new AssignWorkItemRequest(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            installationId,
+            new SoftwareDevelopmentBrief(
+                connectionId,
+                "main",
+                "software-development-polyglot-v1",
+                ["Implement the change."],
+                ["All tests pass."]),
+            4,
+            "assignment-4");
+
+        Assert.Equal(installationId, request.AssignedInstallationId);
+        Assert.Equal(connectionId, request.Development.RepositoryConnectionId);
+        Assert.Equal("software-development-polyglot-v1", request.Development.EnvironmentProfile);
     }
 }

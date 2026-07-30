@@ -9,6 +9,7 @@ public static class WorkManagementCapabilityNames
     public const string ItemCreate = "work.item.create";
     public const string ItemComment = "work.item.comment";
     public const string ItemEstimate = "work.item.estimate";
+    public const string ItemStart = "work.item.start";
     public const string ItemMove = "work.item.move";
     public const string ItemComplete = "work.item.complete";
     public const string ItemCancel = "work.item.cancel";
@@ -28,7 +29,7 @@ public static class WorkManagementCapabilityNames
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
-        BoardRead, BoardCreate, ItemRead, ItemCreate, ItemComment, ItemEstimate,
+        BoardRead, BoardCreate, ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemStart,
         ItemMove, ItemComplete, ItemCancel, ItemReopen, ItemTransfer,
         SprintRead, SprintCreate, SprintStart, SprintComplete, SprintCancel,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
@@ -85,23 +86,59 @@ public static class WorkAutomationTriggers
     public const string CommentCreated = "comment.created";
 }
 
+public static class WorkItemEvents
+{
+    public const string Assigned = "work.item.assigned.v1";
+}
+
 public sealed record WorkBoardListRequest(string? Search = null, bool IncludeArchived = false);
 public sealed record WorkBoardReference(Guid BoardId);
-public sealed record CreateWorkBoardRequest(string Name, string? Description, string IdempotencyKey);
+public sealed record WorkItemReference(Guid BoardId, Guid ItemId);
+public sealed record CreateWorkBoardRequest(string Name, string? Description, string IdempotencyKey)
+{
+    public Guid? TeamId { get; init; }
+}
 public sealed record WorkBoardSummary(
     Guid Id, string Name, string Description, bool IsDefault, bool IsArchived,
-    long Revision, IReadOnlyList<string> AllowedActions);
+    long Revision, IReadOnlyList<string> AllowedActions)
+{
+    public Guid? TeamId { get; init; }
+}
 public sealed record WorkBoardColumn(
     Guid Id, string Name, string Category, int Position, string WipPolicy, int? WipLimit);
+public sealed record SoftwareDevelopmentBrief(
+    Guid RepositoryConnectionId,
+    string? BaseBranch,
+    string EnvironmentProfile,
+    IReadOnlyList<string> Requirements,
+    IReadOnlyList<string> AcceptanceCriteria,
+    IReadOnlyList<string>? Constraints = null);
 public sealed record WorkItem(
     Guid Id, Guid ColumnId, Guid? ParentItemId, Guid? SprintId, string Kind,
     string Title, string Description, string Status, string Priority,
-    decimal? EstimatePoints, long Rank, long Revision, DateTimeOffset? DueDate);
+    decimal? EstimatePoints, long Rank, long Revision, DateTimeOffset? DueDate,
+    Guid? AssignedWorkerId = null,
+    Guid? AssignedEmployeeId = null,
+    Guid? AssignedInstallationId = null,
+    string? AssignedDisplayName = null,
+    SoftwareDevelopmentBrief? Development = null);
 public sealed record WorkBoardDetail(
     WorkBoardSummary Board, IReadOnlyList<WorkBoardColumn> Columns, IReadOnlyList<WorkItem> Items);
 public sealed record CreateWorkItemRequest(
     Guid BoardId, string Title, string? Description, string Kind, string Priority,
     Guid? ColumnId, Guid? ParentItemId, DateTimeOffset? DueDate, string IdempotencyKey);
+public sealed record AssignWorkItemRequest(
+    Guid BoardId,
+    Guid ItemId,
+    Guid AssignedInstallationId,
+    SoftwareDevelopmentBrief Development,
+    long ExpectedRevision,
+    string IdempotencyKey);
+public sealed record WorkItemAssignedEvent(
+    Guid BoardId,
+    Guid ItemId,
+    long AssignmentRevision,
+    Guid AssignedInstallationId);
 public sealed record CommentOnWorkItemRequest(
     Guid BoardId, Guid ItemId, string Body, string IdempotencyKey);
 public sealed record WorkItemComment(

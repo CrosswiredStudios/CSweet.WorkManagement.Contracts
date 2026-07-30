@@ -1,5 +1,8 @@
 # C-Sweet Work Management Contracts
 
+Version 1.2 adds optional team identity to work-board create and summary contracts. The platform
+still enforces board and team-scoped grants server-side.
+
 `CSweet.WorkManagement.Contracts` is the dependency-light .NET wire contract shared by the
 C-Sweet platform broker and `CSweet.Agent.SDK`.
 
