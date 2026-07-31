@@ -26,6 +26,7 @@ public sealed class WorkManagementContractsTests
     [InlineData(WorkManagementCapabilityNames.BoardRead)]
     [InlineData(WorkManagementCapabilityNames.ItemStart)]
     [InlineData(WorkManagementCapabilityNames.ItemComplete)]
+    [InlineData(WorkManagementCapabilityNames.ItemQualitySubmit)]
     [InlineData(WorkManagementCapabilityNames.SprintCarryOver)]
     [InlineData(WorkManagementCapabilityNames.AutomationManage)]
     public void CapabilityNames_UseWorkNamespace(string capability)
@@ -64,5 +65,25 @@ public sealed class WorkManagementContractsTests
         Assert.Equal(installationId, request.AssignedInstallationId);
         Assert.Equal(connectionId, request.Development.RepositoryConnectionId);
         Assert.Equal("software-development-polyglot-v1", request.Development.EnvironmentProfile);
+    }
+
+    [Fact]
+    public void QualityContracts_PinTheReviewedRevision()
+    {
+        var commit = new string('a', 40);
+        var brief = new SoftwareQualityBrief(
+            Guid.NewGuid(), "main", "csweet/ticket", commit,
+            new Uri("https://github.com/example/repo/pull/1"),
+            ["Implement the behavior."], ["All checks pass."], 1, 3);
+        var item = new WorkItem(
+            Guid.NewGuid(), Guid.NewGuid(), null, null, WorkItemKinds.Story,
+            "Ticket", "Description", WorkStatuses.Running, WorkPriorities.High,
+            3, 1, 1, null)
+        {
+            Quality = brief
+        };
+
+        Assert.Equal(commit, item.Quality!.SourceCommitSha);
+        Assert.Equal(3, item.Quality.MaximumReworkCycles);
     }
 }

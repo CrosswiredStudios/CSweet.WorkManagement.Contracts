@@ -15,6 +15,7 @@ public static class WorkManagementCapabilityNames
     public const string ItemCancel = "work.item.cancel";
     public const string ItemReopen = "work.item.reopen";
     public const string ItemTransfer = "work.item.transfer";
+    public const string ItemQualitySubmit = "work.item.quality.submit";
     public const string SprintRead = "work.sprint.read";
     public const string SprintCreate = "work.sprint.create";
     public const string SprintStart = "work.sprint.start";
@@ -30,7 +31,7 @@ public static class WorkManagementCapabilityNames
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
         BoardRead, BoardCreate, ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemStart,
-        ItemMove, ItemComplete, ItemCancel, ItemReopen, ItemTransfer,
+        ItemMove, ItemComplete, ItemCancel, ItemReopen, ItemTransfer, ItemQualitySubmit,
         SprintRead, SprintCreate, SprintStart, SprintComplete, SprintCancel,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         AutomationRead, AutomationManage
@@ -112,7 +113,35 @@ public sealed record SoftwareDevelopmentBrief(
     string EnvironmentProfile,
     IReadOnlyList<string> Requirements,
     IReadOnlyList<string> AcceptanceCriteria,
+    IReadOnlyList<string>? Constraints = null)
+{
+    public Guid? QualityGateColumnId { get; init; }
+    public string? ResumeBranch { get; init; }
+    public string? ResumeCommitSha { get; init; }
+    public IReadOnlyList<QualityFinding>? ReworkFindings { get; init; }
+}
+public sealed record SoftwareQualityBrief(
+    Guid RepositoryConnectionId,
+    string BaseBranch,
+    string SourceBranch,
+    string SourceCommitSha,
+    Uri PullRequestUrl,
+    IReadOnlyList<string> Requirements,
+    IReadOnlyList<string> AcceptanceCriteria,
+    int QualityCycle,
+    int MaximumReworkCycles,
     IReadOnlyList<string>? Constraints = null);
+public sealed record WorkItemDeliverySpecification(
+    Guid RepositoryConnectionId,
+    string? BaseBranch,
+    IReadOnlyList<string> Requirements,
+    IReadOnlyList<string> AcceptanceCriteria,
+    IReadOnlyList<string>? Constraints = null)
+{
+    public Guid? QualityGateColumnId { get; init; }
+    public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
+    public bool IsQaTrackingDefect { get; init; }
+}
 public sealed record WorkItem(
     Guid Id, Guid ColumnId, Guid? ParentItemId, Guid? SprintId, string Kind,
     string Title, string Description, string Status, string Priority,
@@ -121,12 +150,19 @@ public sealed record WorkItem(
     Guid? AssignedEmployeeId = null,
     Guid? AssignedInstallationId = null,
     string? AssignedDisplayName = null,
-    SoftwareDevelopmentBrief? Development = null);
+    SoftwareDevelopmentBrief? Development = null)
+{
+    public SoftwareQualityBrief? Quality { get; init; }
+    public WorkItemDeliverySpecification? Delivery { get; init; }
+}
 public sealed record WorkBoardDetail(
     WorkBoardSummary Board, IReadOnlyList<WorkBoardColumn> Columns, IReadOnlyList<WorkItem> Items);
 public sealed record CreateWorkItemRequest(
     Guid BoardId, string Title, string? Description, string Kind, string Priority,
-    Guid? ColumnId, Guid? ParentItemId, DateTimeOffset? DueDate, string IdempotencyKey);
+    Guid? ColumnId, Guid? ParentItemId, DateTimeOffset? DueDate, string IdempotencyKey)
+{
+    public WorkItemDeliverySpecification? Delivery { get; init; }
+}
 public sealed record AssignWorkItemRequest(
     Guid BoardId,
     Guid ItemId,
@@ -162,10 +198,16 @@ public sealed record WorkSprint(
     Guid Id, Guid BoardId, string Name, string Goal, string Status,
     DateTimeOffset? StartsAt, DateTimeOffset? EndsAt, DateTimeOffset? StartedAt,
     DateTimeOffset? CompletedAt, decimal? CapacityPoints, int ItemCount,
-    int CompletedItemCount, decimal PlannedPoints, decimal CompletedPoints, long Revision);
+    int CompletedItemCount, decimal PlannedPoints, decimal CompletedPoints, long Revision)
+{
+    public int? Sequence { get; init; }
+}
 public sealed record CreateWorkSprintRequest(
     Guid BoardId, string Name, string? Goal, DateTimeOffset? StartsAt,
-    DateTimeOffset? EndsAt, string IdempotencyKey);
+    DateTimeOffset? EndsAt, string IdempotencyKey)
+{
+    public int? Sequence { get; init; }
+}
 public sealed record ChangeWorkSprintStateRequest(
     Guid BoardId, Guid SprintId, long ExpectedRevision, string IdempotencyKey);
 public sealed record SetWorkItemSprintRequest(
@@ -220,3 +262,101 @@ public sealed record ManageWorkAutomationRequest(
     string? Name = null, string? TriggerEventType = null,
     Guid? ConditionColumnId = null, string? Action = null,
     Guid? TargetColumnId = null, bool? IsEnabled = null, long? ExpectedRevision = null);
+
+public static class QualityVerdicts
+{
+    public const string Passed = "Passed";
+    public const string Failed = "Failed";
+    public const string Blocked = "Blocked";
+}
+
+public static class QualityResultStatuses
+{
+    public const string Passed = "Passed";
+    public const string Failed = "Failed";
+    public const string Flaky = "Flaky";
+    public const string NotRun = "NotRun";
+    public const string Blocked = "Blocked";
+}
+
+public static class QualitySeverities
+{
+    public const string Low = "Low";
+    public const string Medium = "Medium";
+    public const string High = "High";
+    public const string Critical = "Critical";
+}
+
+public sealed record QualityValidation(
+    string Command, string Status, int ExitCode, string? DiagnosticExcerpt = null);
+
+public sealed record QualityCriterionResult(
+    string Criterion, string Status, string Evidence);
+
+public sealed record QualityFinding(
+    string Title,
+    string Severity,
+    string Description,
+    IReadOnlyList<string> ReproductionSteps,
+    string ExpectedBehavior,
+    string ActualBehavior,
+    string Evidence);
+
+public sealed record SubmitQualityResultRequest(
+    Guid BoardId,
+    Guid ItemId,
+    long AssignmentRevision,
+    string SourceCommitSha,
+    string Verdict,
+    string Summary,
+    IReadOnlyList<QualityCriterionResult> Criteria,
+    IReadOnlyList<QualityValidation> Validations,
+    IReadOnlyList<QualityFinding> Findings,
+    IReadOnlyList<string> RemainingRisks,
+    string IdempotencyKey);
+
+public sealed record QualityRunResult(
+    Guid QualityRunId,
+    Guid WorkItemId,
+    int QualityCycle,
+    string Verdict,
+    string PipelineStatus,
+    string MergeStatus,
+    IReadOnlyList<Guid> DefectItemIds,
+    DateTimeOffset RecordedAt);
+
+public static class DeliveryPipelineStatuses
+{
+    public const string Disabled = "Disabled";
+    public const string Idle = "Idle";
+    public const string Running = "Running";
+    public const string Paused = "Paused";
+    public const string Completed = "Completed";
+}
+
+public static class DeliveryMergeStatuses
+{
+    public const string None = "None";
+    public const string Queued = "Queued";
+    public const string Merged = "Merged";
+    public const string Blocked = "Blocked";
+}
+
+public sealed record DeliveryPipelineConfiguration(
+    Guid BoardId,
+    Guid DeveloperInstallationId,
+    Guid QualityInstallationId,
+    Guid DevelopmentColumnId,
+    Guid QualityColumnId,
+    Guid DoneColumnId,
+    Guid RepositoryConnectionId,
+    string BaseBranch,
+    string MergeStrategy,
+    bool IsEnabled,
+    string Status,
+    long Revision)
+{
+    public Guid? ActiveSprintId { get; init; }
+    public Guid? ActiveWorkItemId { get; init; }
+    public string? LastError { get; init; }
+}
