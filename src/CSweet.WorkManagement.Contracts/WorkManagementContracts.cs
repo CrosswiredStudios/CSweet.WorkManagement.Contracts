@@ -3,6 +3,14 @@ namespace CSweet.WorkManagement.Contracts;
 /// <summary>Canonical capability names for the agent-facing work-management protocol.</summary>
 public static class WorkManagementCapabilityNames
 {
+    public const string ExecutionRunV1 = "work.execution.run.v1";
+    public const string OrchestrationRead = "work.orchestration.read";
+    public const string OrchestrationPreflight = "work.orchestration.preflight";
+    public const string OrchestrationStart = "work.orchestration.start";
+    public const string OrchestrationPause = "work.orchestration.pause";
+    public const string OrchestrationResume = "work.orchestration.resume";
+    public const string OrchestrationCancel = "work.orchestration.cancel";
+    public const string OrchestrationRetry = "work.orchestration.retry";
     public const string BoardRead = "work.board.read";
     public const string BoardCreate = "work.board.create";
     public const string ItemRead = "work.item.read";
@@ -30,11 +38,11 @@ public static class WorkManagementCapabilityNames
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
-        BoardRead, BoardCreate, ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemStart,
-        ItemMove, ItemComplete, ItemCancel, ItemReopen, ItemTransfer, ItemQualitySubmit,
-        SprintRead, SprintCreate, SprintStart, SprintComplete, SprintCancel,
+        BoardRead, BoardCreate, ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemTransfer,
+        SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
-        AutomationRead, AutomationManage
+        OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
+        OrchestrationResume, OrchestrationCancel, OrchestrationRetry, ExecutionRunV1
     ], StringComparer.Ordinal);
 }
 
@@ -64,6 +72,7 @@ public static class WorkStatuses
     public const string WaitingForApproval = "WaitingForApproval";
     public const string Completed = "Completed";
     public const string Failed = "Failed";
+    public const string Blocked = "Blocked";
     public const string Cancelled = "Cancelled";
 }
 
@@ -98,12 +107,15 @@ public sealed record WorkItemReference(Guid BoardId, Guid ItemId);
 public sealed record CreateWorkBoardRequest(string Name, string? Description, string IdempotencyKey)
 {
     public Guid? TeamId { get; init; }
+    public string? Key { get; init; }
 }
 public sealed record WorkBoardSummary(
     Guid Id, string Name, string Description, bool IsDefault, bool IsArchived,
     long Revision, IReadOnlyList<string> AllowedActions)
 {
     public Guid? TeamId { get; init; }
+    public Guid? ManagerOrganizationUserId { get; init; }
+    public string? Key { get; init; }
 }
 public sealed record WorkBoardColumn(
     Guid Id, string Name, string Category, int Position, string WipPolicy, int? WipLimit);
@@ -154,6 +166,9 @@ public sealed record WorkItem(
 {
     public SoftwareQualityBrief? Quality { get; init; }
     public WorkItemDeliverySpecification? Delivery { get; init; }
+    public string? Identifier { get; init; }
+    public Guid? AccountableOrganizationUserId { get; init; }
+    public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
 }
 public sealed record WorkBoardDetail(
     WorkBoardSummary Board, IReadOnlyList<WorkBoardColumn> Columns, IReadOnlyList<WorkItem> Items);
@@ -162,6 +177,8 @@ public sealed record CreateWorkItemRequest(
     Guid? ColumnId, Guid? ParentItemId, DateTimeOffset? DueDate, string IdempotencyKey)
 {
     public WorkItemDeliverySpecification? Delivery { get; init; }
+    public Guid? AccountableOrganizationUserId { get; init; }
+    public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
 }
 public sealed record AssignWorkItemRequest(
     Guid BoardId,

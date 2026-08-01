@@ -5,7 +5,7 @@ namespace CSweet.WorkManagement.Contracts.Tests;
 public sealed class WorkManagementContractsTests
 {
     [Fact]
-    public void CapabilityNames_AreUniqueAndComplete()
+    public void ActiveCapabilityNames_AreUniqueAndExcludeRetiredExecutionPaths()
     {
         var constants = typeof(WorkManagementCapabilityNames)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
@@ -16,22 +16,35 @@ public sealed class WorkManagementContractsTests
             .Select(field => (string)field.GetRawConstantValue()!)
             .ToHashSet(StringComparer.Ordinal);
 
-        Assert.Equal(constants.Count, WorkManagementCapabilityNames.All.Count);
-        Assert.Equal(
-            constants.Order(StringComparer.Ordinal),
-            WorkManagementCapabilityNames.All.Order(StringComparer.Ordinal));
+        Assert.Equal(WorkManagementCapabilityNames.All.Count,
+            WorkManagementCapabilityNames.All.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(WorkManagementCapabilityNames.All, capability => Assert.Contains(capability, constants));
+        Assert.DoesNotContain(WorkManagementCapabilityNames.ItemMove, WorkManagementCapabilityNames.All);
+        Assert.DoesNotContain(WorkManagementCapabilityNames.SprintStart, WorkManagementCapabilityNames.All);
+        Assert.DoesNotContain(WorkManagementCapabilityNames.AutomationManage, WorkManagementCapabilityNames.All);
     }
 
     [Theory]
     [InlineData(WorkManagementCapabilityNames.BoardRead)]
-    [InlineData(WorkManagementCapabilityNames.ItemStart)]
-    [InlineData(WorkManagementCapabilityNames.ItemComplete)]
-    [InlineData(WorkManagementCapabilityNames.ItemQualitySubmit)]
+    [InlineData(WorkManagementCapabilityNames.OrchestrationStart)]
+    [InlineData(WorkManagementCapabilityNames.OrchestrationRetry)]
     [InlineData(WorkManagementCapabilityNames.SprintCarryOver)]
-    [InlineData(WorkManagementCapabilityNames.AutomationManage)]
+    [InlineData(WorkManagementCapabilityNames.ExecutionRunV1)]
     public void CapabilityNames_UseWorkNamespace(string capability)
     {
         Assert.StartsWith("work.", capability, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ExecutionContract_DoesNotLetWorkerChooseNextStage()
+    {
+        var properties = typeof(WorkExecutionOutcomeV1).GetProperties()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.DoesNotContain("TargetStageKey", properties);
+        Assert.Contains("OutcomeCode", properties);
+        Assert.Contains("Disposition", properties);
     }
 
     [Fact]
@@ -41,7 +54,7 @@ public sealed class WorkManagementContractsTests
         Assert.Equal("Critical", WorkPriorities.Critical);
         Assert.Equal("Backlog", WorkStatuses.Backlog);
         Assert.Equal("WaitingForApproval", WorkStatuses.WaitingForApproval);
-        Assert.Equal("work.item.assigned.v1", WorkItemEvents.Assigned);
+        Assert.Equal("Blocked", WorkStatuses.Blocked);
     }
 
     [Fact]
