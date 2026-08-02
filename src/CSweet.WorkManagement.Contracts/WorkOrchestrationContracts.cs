@@ -80,6 +80,18 @@ public sealed record WorkOrchestrationPolicyRevision(
     DateTimeOffset CreatedAt,
     DateTimeOffset? PublishedAt);
 
+public sealed record ConfigureSoftwareOrchestrationTemplateRequest(
+    Guid BoardId,
+    Guid ReadyColumnId,
+    Guid DevelopmentColumnId,
+    Guid DevCompleteColumnId,
+    Guid QualityColumnId,
+    Guid ReadyToMergeColumnId,
+    Guid DoneColumnId,
+    string MergeMode,
+    int MaximumQualityCycles,
+    string IdempotencyKey);
+
 public sealed record WorkStageAssignment(
     string StageKey,
     string PrincipalKind,

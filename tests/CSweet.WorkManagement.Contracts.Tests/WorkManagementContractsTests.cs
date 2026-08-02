@@ -19,7 +19,10 @@ public sealed class WorkManagementContractsTests
         Assert.Equal(WorkManagementCapabilityNames.All.Count,
             WorkManagementCapabilityNames.All.Distinct(StringComparer.Ordinal).Count());
         Assert.All(WorkManagementCapabilityNames.All, capability => Assert.Contains(capability, constants));
-        Assert.DoesNotContain(WorkManagementCapabilityNames.ItemMove, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.ItemMove, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.BoardConfigureColumns, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.OrchestrationConfigureSoftwareTemplate,
+            WorkManagementCapabilityNames.All);
         Assert.DoesNotContain(WorkManagementCapabilityNames.SprintStart, WorkManagementCapabilityNames.All);
         Assert.DoesNotContain(WorkManagementCapabilityNames.AutomationManage, WorkManagementCapabilityNames.All);
     }

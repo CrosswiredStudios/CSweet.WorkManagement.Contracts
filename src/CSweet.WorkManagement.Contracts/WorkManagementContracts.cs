@@ -13,6 +13,8 @@ public static class WorkManagementCapabilityNames
     public const string OrchestrationRetry = "work.orchestration.retry";
     public const string BoardRead = "work.board.read";
     public const string BoardCreate = "work.board.create";
+    public const string BoardConfigureColumns = "work.board.columns.configure";
+    public const string OrchestrationConfigureSoftwareTemplate = "work.orchestration.software-template.configure";
     public const string ItemRead = "work.item.read";
     public const string ItemCreate = "work.item.create";
     public const string ItemComment = "work.item.comment";
@@ -38,11 +40,13 @@ public static class WorkManagementCapabilityNames
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
-        BoardRead, BoardCreate, ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemTransfer,
+        BoardRead, BoardCreate, BoardConfigureColumns,
+        ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemMove, ItemTransfer,
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
-        OrchestrationResume, OrchestrationCancel, OrchestrationRetry, ExecutionRunV1
+        OrchestrationResume, OrchestrationCancel, OrchestrationRetry,
+        OrchestrationConfigureSoftwareTemplate, ExecutionRunV1
     ], StringComparer.Ordinal);
 }
 
@@ -119,6 +123,20 @@ public sealed record WorkBoardSummary(
 }
 public sealed record WorkBoardColumn(
     Guid Id, string Name, string Category, int Position, string WipPolicy, int? WipLimit);
+public sealed record WorkBoardColumnConfiguration(
+    Guid? Id, string Name, string Category, string WipPolicy, int? WipLimit = null);
+public sealed record ConfigureWorkBoardColumnsRequest(
+    Guid BoardId,
+    long ExpectedRevision,
+    IReadOnlyList<WorkBoardColumnConfiguration> Columns,
+    string IdempotencyKey);
+public sealed record TeamRepositoryOptionsRequest(Guid TeamId);
+public sealed record TeamRepositoryOption(
+    Guid RepositoryConnectionId,
+    string Name,
+    string Provider,
+    string PermittedRepositoryPath,
+    string DefaultBranch);
 public sealed record SoftwareDevelopmentBrief(
     Guid RepositoryConnectionId,
     string? BaseBranch,
