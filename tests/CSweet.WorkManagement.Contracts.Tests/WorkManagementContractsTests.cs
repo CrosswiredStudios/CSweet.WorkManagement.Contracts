@@ -64,14 +64,13 @@ public sealed class WorkManagementContractsTests
     public void DevelopmentAssignmentContracts_CarryStructuredAuthority()
     {
         var installationId = Guid.NewGuid();
-        var connectionId = Guid.NewGuid();
+        var repositoryId = Guid.NewGuid();
         var request = new AssignWorkItemRequest(
             Guid.NewGuid(),
             Guid.NewGuid(),
             installationId,
             new SoftwareDevelopmentBrief(
-                connectionId,
-                "main",
+                repositoryId,
                 "software-development-polyglot-v1",
                 ["Implement the change."],
                 ["All tests pass."]),
@@ -79,7 +78,7 @@ public sealed class WorkManagementContractsTests
             "assignment-4");
 
         Assert.Equal(installationId, request.AssignedInstallationId);
-        Assert.Equal(connectionId, request.Development.RepositoryConnectionId);
+        Assert.Equal(repositoryId, request.Development.RepositoryId);
         Assert.Equal("software-development-polyglot-v1", request.Development.EnvironmentProfile);
     }
 
@@ -88,7 +87,7 @@ public sealed class WorkManagementContractsTests
     {
         var commit = new string('a', 40);
         var brief = new SoftwareQualityBrief(
-            Guid.NewGuid(), "main", "csweet/ticket", commit,
+            Guid.NewGuid(), commit, "GitHub", "PullRequest",
             new Uri("https://github.com/example/repo/pull/1"),
             ["Implement the behavior."], ["All checks pass."], 1, 3);
         var item = new WorkItem(

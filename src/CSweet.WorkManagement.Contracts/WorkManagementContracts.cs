@@ -132,38 +132,35 @@ public sealed record ConfigureWorkBoardColumnsRequest(
     string IdempotencyKey);
 public sealed record TeamRepositoryOptionsRequest(Guid TeamId);
 public sealed record TeamRepositoryOption(
-    Guid RepositoryConnectionId,
+    Guid RepositoryId,
     string Name,
     string Provider,
-    string PermittedRepositoryPath,
-    string DefaultBranch);
+    string CanonicalPath,
+    string DefaultBranch,
+    string DeliveryKind);
 public sealed record SoftwareDevelopmentBrief(
-    Guid RepositoryConnectionId,
-    string? BaseBranch,
+    Guid RepositoryId,
     string EnvironmentProfile,
     IReadOnlyList<string> Requirements,
     IReadOnlyList<string> AcceptanceCriteria,
     IReadOnlyList<string>? Constraints = null)
 {
     public Guid? QualityGateColumnId { get; init; }
-    public string? ResumeBranch { get; init; }
-    public string? ResumeCommitSha { get; init; }
     public IReadOnlyList<QualityFinding>? ReworkFindings { get; init; }
 }
 public sealed record SoftwareQualityBrief(
-    Guid RepositoryConnectionId,
-    string BaseBranch,
-    string SourceBranch,
+    Guid RepositoryId,
     string SourceCommitSha,
-    Uri PullRequestUrl,
+    string Provider,
+    string DeliveryKind,
+    Uri? PullRequestUrl,
     IReadOnlyList<string> Requirements,
     IReadOnlyList<string> AcceptanceCriteria,
     int QualityCycle,
     int MaximumReworkCycles,
     IReadOnlyList<string>? Constraints = null);
 public sealed record WorkItemDeliverySpecification(
-    Guid RepositoryConnectionId,
-    string? BaseBranch,
+    Guid RepositoryId,
     IReadOnlyList<string> Requirements,
     IReadOnlyList<string> AcceptanceCriteria,
     IReadOnlyList<string>? Constraints = null)
@@ -384,8 +381,7 @@ public sealed record DeliveryPipelineConfiguration(
     Guid DevelopmentColumnId,
     Guid QualityColumnId,
     Guid DoneColumnId,
-    Guid RepositoryConnectionId,
-    string BaseBranch,
+    Guid RepositoryId,
     string MergeStrategy,
     bool IsEnabled,
     string Status,

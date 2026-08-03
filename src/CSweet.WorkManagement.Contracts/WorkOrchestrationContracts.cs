@@ -114,6 +114,7 @@ public sealed record WorkExecutionAssignmentV1(
     Guid BoardId,
     Guid SprintId,
     Guid ItemId,
+    long AssignmentRevision,
     string BoardKey,
     string ItemIdentifier,
     Guid PolicyRevisionId,
