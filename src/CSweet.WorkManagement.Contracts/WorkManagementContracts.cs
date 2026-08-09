@@ -45,6 +45,9 @@ public static class WorkManagementCapabilityNames
     public const string PersonalTodoComplete = "work.personal-todo.complete.v1";
     public const string PersonalTodoBlock = "work.personal-todo.block.v1";
     public const string PersonalTodoRelease = "work.personal-todo.release.v1";
+    public const string PersonalTodoUpdate = "work.personal-todo.update.v1";
+    public const string PersonalTodoArchive = "work.personal-todo.archive.v1";
+    public const string PersonalTodoRestore = "work.personal-todo.restore.v1";
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
@@ -56,7 +59,8 @@ public static class WorkManagementCapabilityNames
         OrchestrationResume, OrchestrationCancel, OrchestrationRetry,
         OrchestrationConfigureSoftwareTemplate, ExecutionRunV1,
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
-        PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease
+        PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,
+        PersonalTodoUpdate, PersonalTodoArchive, PersonalTodoRestore
     ], StringComparer.Ordinal);
 }
 
@@ -89,6 +93,69 @@ public static class WorkStatuses
     public const string Blocked = "Blocked";
     public const string Cancelled = "Cancelled";
 }
+
+public static class WorkBoardKinds
+{
+    public const string Standard = "Standard";
+    public const string Personal = "Personal";
+}
+
+public static class WorkAssignmentRelationships
+{
+    public const string DirectAssignee = "DirectAssignee";
+    public const string AccountableOwner = "AccountableOwner";
+    public const string StageAssignee = "StageAssignee";
+    public const string StageAgent = "StageAgent";
+}
+
+/// <summary>
+/// Canonical work-item shape shared by standard boards, personal boards, employee views,
+/// and agent-facing compatibility adapters.
+/// </summary>
+public sealed record WorkItemResponse(
+    Guid Id,
+    Guid OrganizationId,
+    Guid BoardId,
+    Guid ColumnId,
+    string Kind,
+    string Title,
+    string Description,
+    string Status,
+    string Priority,
+    long Rank,
+    long Revision,
+    DateTimeOffset? DueDate,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset? ArchivedAt = null)
+{
+    public string? Identifier { get; init; }
+    public Guid? SprintId { get; init; }
+    public decimal? EstimatePoints { get; init; }
+    public WorkItemProvenance? Provenance { get; init; }
+    public WorkAssignmentMetadata? Assignment { get; init; }
+    public WorkItemExecutionMetadata? Execution { get; init; }
+}
+
+public sealed record WorkItemProvenance(
+    Guid? CreatedByOrganizationUserId,
+    Guid? SourceConversationId,
+    Guid? SourceMessageId,
+    string? CorrelationId,
+    string? CausationId,
+    string? IdempotencyKey);
+
+public sealed record WorkAssignmentMetadata(
+    Guid? AssignedEmployeeId,
+    Guid? AssignedAgentInstallationId,
+    Guid? AccountableOrganizationUserId,
+    IReadOnlyList<string> Relationships);
+
+public sealed record WorkItemExecutionMetadata(
+    string? ResultSummary,
+    string? BlockReason,
+    Guid? ClaimEventId,
+    DateTimeOffset? ClaimExpiresAt);
 
 public static class WorkAutomationOperations
 {
@@ -130,6 +197,9 @@ public static class PersonalTodoCapabilities
     public const string Complete = WorkManagementCapabilityNames.PersonalTodoComplete;
     public const string Block = WorkManagementCapabilityNames.PersonalTodoBlock;
     public const string Release = WorkManagementCapabilityNames.PersonalTodoRelease;
+    public const string Update = WorkManagementCapabilityNames.PersonalTodoUpdate;
+    public const string Archive = WorkManagementCapabilityNames.PersonalTodoArchive;
+    public const string Restore = WorkManagementCapabilityNames.PersonalTodoRestore;
 }
 
 public static class PersonalTodoStatuses
@@ -173,10 +243,12 @@ public sealed record PersonalTodoItem(
     string? ResultSummary,
     string? BlockReason,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset? ArchivedAt = null);
 
 public sealed record PersonalTodoDirectory(
-    IReadOnlyList<PersonalTodoBoard> Boards);
+    IReadOnlyList<PersonalTodoBoard> Boards,
+    Guid? CurrentOrganizationUserId = null);
 
 public sealed record AddPersonalTodoItemRequest(
     string Title,
@@ -186,7 +258,36 @@ public sealed record AddPersonalTodoItemRequest(
     string IdempotencyKey,
     Guid? TargetOrganizationUserId = null,
     Guid? SourceConversationId = null,
-    Guid? SourceMessageId = null);
+    Guid? SourceMessageId = null,
+    string? CorrelationId = null,
+    string? CausationId = null);
+
+public sealed record UpdatePersonalTodoItemRequest(
+    Guid ItemId,
+    string Title,
+    string? Description,
+    string Priority,
+    DateTimeOffset? DueDate,
+    long ExpectedRevision,
+    string IdempotencyKey);
+
+public sealed record ArchivePersonalTodoItemRequest(
+    Guid ItemId,
+    long ExpectedRevision,
+    string IdempotencyKey);
+
+public sealed record RestorePersonalTodoItemRequest(
+    Guid ItemId,
+    long ExpectedRevision,
+    string IdempotencyKey);
+
+public sealed record SetHumanPersonalTodoStatusRequest(
+    Guid ItemId,
+    string Status,
+    long ExpectedRevision,
+    string? Summary,
+    string? Reason,
+    string IdempotencyKey);
 
 public sealed record ReorderPersonalTodoItemRequest(
     Guid ItemId,
