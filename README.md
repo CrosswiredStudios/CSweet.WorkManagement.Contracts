@@ -1,8 +1,8 @@
 # C-Sweet Work Management Contracts
 
-Version 1.3 adds ordered sprints, structured delivery specifications, pinned QA briefs and
-results, pipeline state, and work-item-scoped quality submission. The platform still enforces
-board, team, repository, and item grants server-side.
+Version 3.1 adds protected personal agent to-do boards, sequential claim contracts, and durable
+available events. The platform still enforces board, team, repository, item, and personal-board
+grants server-side.
 
 `CSweet.WorkManagement.Contracts` is the dependency-light .NET wire contract shared by the
 C-Sweet platform broker and `CSweet.Agent.SDK`.

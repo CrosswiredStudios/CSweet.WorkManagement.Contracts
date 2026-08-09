@@ -37,6 +37,14 @@ public static class WorkManagementCapabilityNames
     public const string SprintReadReports = "work.sprint.report.read";
     public const string AutomationRead = "work.automation.read";
     public const string AutomationManage = "work.automation.manage";
+    public const string PersonalTodoRead = "work.personal-todo.read.v1";
+    public const string PersonalTodoAdd = "work.personal-todo.add.v1";
+    public const string PersonalTodoReorder = "work.personal-todo.reorder.v1";
+    public const string PersonalTodoRequeue = "work.personal-todo.requeue.v1";
+    public const string PersonalTodoClaim = "work.personal-todo.claim.v1";
+    public const string PersonalTodoComplete = "work.personal-todo.complete.v1";
+    public const string PersonalTodoBlock = "work.personal-todo.block.v1";
+    public const string PersonalTodoRelease = "work.personal-todo.release.v1";
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
@@ -46,7 +54,9 @@ public static class WorkManagementCapabilityNames
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
         OrchestrationResume, OrchestrationCancel, OrchestrationRetry,
-        OrchestrationConfigureSoftwareTemplate, ExecutionRunV1
+        OrchestrationConfigureSoftwareTemplate, ExecutionRunV1,
+        PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
+        PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease
     ], StringComparer.Ordinal);
 }
 
@@ -104,6 +114,122 @@ public static class WorkItemEvents
 {
     public const string Assigned = "work.item.assigned.v1";
 }
+
+public static class PersonalTodoEvents
+{
+    public const string Available = "com.csweet.work.personal-todo.available.v1";
+}
+
+public static class PersonalTodoCapabilities
+{
+    public const string Read = WorkManagementCapabilityNames.PersonalTodoRead;
+    public const string Add = WorkManagementCapabilityNames.PersonalTodoAdd;
+    public const string Reorder = WorkManagementCapabilityNames.PersonalTodoReorder;
+    public const string Requeue = WorkManagementCapabilityNames.PersonalTodoRequeue;
+    public const string Claim = WorkManagementCapabilityNames.PersonalTodoClaim;
+    public const string Complete = WorkManagementCapabilityNames.PersonalTodoComplete;
+    public const string Block = WorkManagementCapabilityNames.PersonalTodoBlock;
+    public const string Release = WorkManagementCapabilityNames.PersonalTodoRelease;
+}
+
+public static class PersonalTodoStatuses
+{
+    public const string Ready = "Ready";
+    public const string Running = "Running";
+    public const string Completed = "Completed";
+    public const string Blocked = "Blocked";
+}
+
+public sealed record PersonalTodoBoard(
+    Guid BoardId,
+    Guid OwnerOrganizationUserId,
+    string OwnerDisplayName,
+    Guid? ManagerOrganizationUserId,
+    string? ManagerDisplayName,
+    long Revision,
+    IReadOnlyList<PersonalTodoItem> Items);
+
+public sealed record PersonalTodoMention(
+    Guid OrganizationUserId,
+    string DisplayName,
+    string EmployeeType);
+
+public sealed record PersonalTodoItem(
+    Guid Id,
+    Guid BoardId,
+    Guid OwnerOrganizationUserId,
+    Guid CreatedByOrganizationUserId,
+    string CreatedByDisplayName,
+    string Title,
+    string Description,
+    string Status,
+    string Priority,
+    long Rank,
+    long Revision,
+    DateTimeOffset? DueDate,
+    Guid? SourceConversationId,
+    Guid? SourceMessageId,
+    IReadOnlyList<PersonalTodoMention> Mentions,
+    string? ResultSummary,
+    string? BlockReason,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+public sealed record PersonalTodoDirectory(
+    IReadOnlyList<PersonalTodoBoard> Boards);
+
+public sealed record AddPersonalTodoItemRequest(
+    string Title,
+    string? Description,
+    string Priority,
+    DateTimeOffset? DueDate,
+    string IdempotencyKey,
+    Guid? TargetOrganizationUserId = null,
+    Guid? SourceConversationId = null,
+    Guid? SourceMessageId = null);
+
+public sealed record ReorderPersonalTodoItemRequest(
+    Guid ItemId,
+    Guid? BeforeItemId,
+    long ExpectedRevision,
+    string IdempotencyKey);
+
+public sealed record RequeuePersonalTodoItemRequest(
+    Guid ItemId,
+    long ExpectedRevision,
+    string IdempotencyKey);
+
+public sealed record ClaimPersonalTodoItemRequest(
+    Guid EventId,
+    string IdempotencyKey);
+
+public sealed record PersonalTodoClaim(
+    PersonalTodoItem? Item);
+
+public sealed record CompletePersonalTodoItemRequest(
+    Guid ItemId,
+    Guid EventId,
+    long ExpectedRevision,
+    string? Summary,
+    string IdempotencyKey);
+
+public sealed record BlockPersonalTodoItemRequest(
+    Guid ItemId,
+    Guid EventId,
+    long ExpectedRevision,
+    string Reason,
+    string IdempotencyKey);
+
+public sealed record ReleasePersonalTodoItemRequest(
+    Guid ItemId,
+    Guid EventId,
+    long ExpectedRevision,
+    string IdempotencyKey);
+
+public sealed record PersonalTodoAvailableEvent(
+    Guid OwnerOrganizationUserId,
+    Guid BoardId,
+    Guid TriggerItemId);
 
 public sealed record WorkBoardListRequest(string? Search = null, bool IncludeArchived = false);
 public sealed record WorkBoardReference(Guid BoardId);

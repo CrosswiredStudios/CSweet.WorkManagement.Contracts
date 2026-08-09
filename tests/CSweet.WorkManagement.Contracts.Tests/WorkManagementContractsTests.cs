@@ -25,6 +25,18 @@ public sealed class WorkManagementContractsTests
             WorkManagementCapabilityNames.All);
         Assert.DoesNotContain(WorkManagementCapabilityNames.SprintStart, WorkManagementCapabilityNames.All);
         Assert.DoesNotContain(WorkManagementCapabilityNames.AutomationManage, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.PersonalTodoAdd, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.PersonalTodoClaim, WorkManagementCapabilityNames.All);
+    }
+
+    [Fact]
+    public void PersonalTodoContracts_KeepRuntimeClaimsPrivate()
+    {
+        Assert.Equal("com.csweet.work.personal-todo.available.v1", PersonalTodoEvents.Available);
+        Assert.DoesNotContain(typeof(PersonalTodoItem).GetProperties(), property =>
+            property.Name.Contains("Claim", StringComparison.Ordinal));
+        Assert.DoesNotContain(typeof(PersonalTodoClaim).GetProperties(), property =>
+            property.Name.Contains("Token", StringComparison.Ordinal));
     }
 
     [Theory]
