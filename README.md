@@ -1,8 +1,9 @@
 # C-Sweet Work Management Contracts
 
-Version 3.4 adds sequenced personal work. An agent can create a personal item in `Backlog`
-without dispatching it, then promote it through `work.personal-todo.activate.v1` when it becomes
-the next authorized item. Personal items also expose their non-secret correlation identifier.
+Version 3.5 adds durable in-progress waiting. The SDK can release a transient execution claim
+while leaving the personal item in `Running`/Doing until an external event resumes it. Version 3.4
+added sequenced personal work through `Backlog` and explicit activation. Personal items also expose
+their non-secret correlation identifier.
 The platform still enforces board, team, repository, item, and personal-board grants server-side.
 
 `CSweet.WorkManagement.Contracts` is the dependency-light .NET wire contract shared by the

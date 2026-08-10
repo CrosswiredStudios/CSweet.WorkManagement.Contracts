@@ -38,6 +38,10 @@ public sealed class WorkManagementContractsTests
             property.Name.Contains("Claim", StringComparison.Ordinal));
         Assert.DoesNotContain(typeof(PersonalTodoClaim).GetProperties(), property =>
             property.Name.Contains("Token", StringComparison.Ordinal));
+        Assert.False(new ReleasePersonalTodoItemRequest(
+            Guid.NewGuid(), Guid.NewGuid(), 1, "release").KeepInProgress);
+        Assert.True(new ReleasePersonalTodoItemRequest(
+            Guid.NewGuid(), Guid.NewGuid(), 1, "release") { KeepInProgress = true }.KeepInProgress);
     }
 
     [Fact]

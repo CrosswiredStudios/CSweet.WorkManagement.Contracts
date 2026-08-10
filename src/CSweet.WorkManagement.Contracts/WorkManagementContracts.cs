@@ -368,7 +368,14 @@ public sealed record ReleasePersonalTodoItemRequest(
     Guid ItemId,
     Guid EventId,
     long ExpectedRevision,
-    string IdempotencyKey);
+    string IdempotencyKey)
+{
+    /// <summary>
+    /// Releases the transient execution claim without returning the item to Ready. The item stays
+    /// visibly in progress until an external event requeues it for completion.
+    /// </summary>
+    public bool KeepInProgress { get; init; }
+}
 
 public sealed record PersonalTodoAvailableEvent(
     Guid OwnerOrganizationUserId,
