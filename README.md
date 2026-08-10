@@ -1,9 +1,9 @@
 # C-Sweet Work Management Contracts
 
-Version 3.3 adds structured identity spans for work-item titles and descriptions. Protected
-personal queues expose both the validated spans and deduplicated authoritative identities to agent
-callbacks. The platform still enforces board, team, repository, item, and personal-board grants
-server-side.
+Version 3.4 adds sequenced personal work. An agent can create a personal item in `Backlog`
+without dispatching it, then promote it through `work.personal-todo.activate.v1` when it becomes
+the next authorized item. Personal items also expose their non-secret correlation identifier.
+The platform still enforces board, team, repository, item, and personal-board grants server-side.
 
 `CSweet.WorkManagement.Contracts` is the dependency-light .NET wire contract shared by the
 C-Sweet platform broker and `CSweet.Agent.SDK`.

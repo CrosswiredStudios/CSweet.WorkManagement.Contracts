@@ -41,6 +41,7 @@ public static class WorkManagementCapabilityNames
     public const string PersonalTodoAdd = "work.personal-todo.add.v1";
     public const string PersonalTodoReorder = "work.personal-todo.reorder.v1";
     public const string PersonalTodoRequeue = "work.personal-todo.requeue.v1";
+    public const string PersonalTodoActivate = "work.personal-todo.activate.v1";
     public const string PersonalTodoClaim = "work.personal-todo.claim.v1";
     public const string PersonalTodoComplete = "work.personal-todo.complete.v1";
     public const string PersonalTodoBlock = "work.personal-todo.block.v1";
@@ -59,6 +60,7 @@ public static class WorkManagementCapabilityNames
         OrchestrationResume, OrchestrationCancel, OrchestrationRetry,
         OrchestrationConfigureSoftwareTemplate, ExecutionRunV1,
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
+        PersonalTodoActivate,
         PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,
         PersonalTodoUpdate, PersonalTodoArchive, PersonalTodoRestore
     ], StringComparer.Ordinal);
@@ -218,6 +220,7 @@ public static class PersonalTodoCapabilities
     public const string Add = WorkManagementCapabilityNames.PersonalTodoAdd;
     public const string Reorder = WorkManagementCapabilityNames.PersonalTodoReorder;
     public const string Requeue = WorkManagementCapabilityNames.PersonalTodoRequeue;
+    public const string Activate = WorkManagementCapabilityNames.PersonalTodoActivate;
     public const string Claim = WorkManagementCapabilityNames.PersonalTodoClaim;
     public const string Complete = WorkManagementCapabilityNames.PersonalTodoComplete;
     public const string Block = WorkManagementCapabilityNames.PersonalTodoBlock;
@@ -229,6 +232,7 @@ public static class PersonalTodoCapabilities
 
 public static class PersonalTodoStatuses
 {
+    public const string Backlog = "Backlog";
     public const string Ready = "Ready";
     public const string Running = "Running";
     public const string Completed = "Completed";
@@ -272,6 +276,7 @@ public sealed record PersonalTodoItem(
     DateTimeOffset? ArchivedAt = null)
 {
     public IReadOnlyList<WorkItemMentionSpan> MentionSpans { get; init; } = [];
+    public string? CorrelationId { get; init; }
 }
 
 public sealed record PersonalTodoDirectory(
@@ -289,7 +294,15 @@ public sealed record AddPersonalTodoItemRequest(
     Guid? SourceMessageId = null,
     string? CorrelationId = null,
     string? CausationId = null,
-    IReadOnlyList<WorkItemMentionInput>? Mentions = null);
+    IReadOnlyList<WorkItemMentionInput>? Mentions = null)
+{
+    public bool StartInBacklog { get; init; }
+}
+
+public sealed record ActivatePersonalTodoItemRequest(
+    Guid ItemId,
+    long ExpectedRevision,
+    string IdempotencyKey);
 
 public sealed record UpdatePersonalTodoItemRequest(
     Guid ItemId,

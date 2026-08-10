@@ -27,6 +27,7 @@ public sealed class WorkManagementContractsTests
         Assert.DoesNotContain(WorkManagementCapabilityNames.AutomationManage, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoAdd, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoClaim, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.PersonalTodoActivate, WorkManagementCapabilityNames.All);
     }
 
     [Fact]
@@ -49,9 +50,10 @@ public sealed class WorkManagementContractsTests
             personId, "Matt", "Human", WorkItemMentionFields.Title, 5, 5, "@Matt");
         var request = new AddPersonalTodoItemRequest(
             "Tell @Matt a joke", null, WorkPriorities.Medium, null, "mention-1",
-            Mentions: [input]);
+            Mentions: [input]) { StartInBacklog = true };
 
         Assert.Equal(personId, Assert.Single(request.Mentions!).OrganizationUserId);
+        Assert.True(request.StartInBacklog);
         Assert.Equal("@Matt", span.DisplayText);
         Assert.Contains(span.Field, WorkItemMentionFields.All);
     }
