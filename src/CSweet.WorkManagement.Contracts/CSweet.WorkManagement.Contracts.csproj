@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <PackageId>CSweet.WorkManagement.Contracts</PackageId>
-    <Version>3.1.0</Version>
+    <Version>3.3.0</Version>
     <PackageVersion Condition="'$(CSweetWorkManagementContractsPackageVersion)' != ''">$(CSweetWorkManagementContractsPackageVersion)</PackageVersion>
     <Authors>C-Sweet</Authors>
     <Company>C-Sweet</Company>

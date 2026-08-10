@@ -39,6 +39,23 @@ public sealed class WorkManagementContractsTests
             property.Name.Contains("Token", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void WorkItemMentionsCarryFieldSpansAndAuthoritativeIdentity()
+    {
+        var personId = Guid.NewGuid();
+        var input = new WorkItemMentionInput(
+            personId, WorkItemMentionFields.Title, 5, 5);
+        var span = new WorkItemMentionSpan(
+            personId, "Matt", "Human", WorkItemMentionFields.Title, 5, 5, "@Matt");
+        var request = new AddPersonalTodoItemRequest(
+            "Tell @Matt a joke", null, WorkPriorities.Medium, null, "mention-1",
+            Mentions: [input]);
+
+        Assert.Equal(personId, Assert.Single(request.Mentions!).OrganizationUserId);
+        Assert.Equal("@Matt", span.DisplayText);
+        Assert.Contains(span.Field, WorkItemMentionFields.All);
+    }
+
     [Theory]
     [InlineData(WorkManagementCapabilityNames.BoardRead)]
     [InlineData(WorkManagementCapabilityNames.OrchestrationStart)]

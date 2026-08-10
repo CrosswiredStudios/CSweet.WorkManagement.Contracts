@@ -1,8 +1,9 @@
 # C-Sweet Work Management Contracts
 
-Version 3.1 adds protected personal agent to-do boards, sequential claim contracts, and durable
-available events. The platform still enforces board, team, repository, item, and personal-board
-grants server-side.
+Version 3.3 adds structured identity spans for work-item titles and descriptions. Protected
+personal queues expose both the validated spans and deduplicated authoritative identities to agent
+callbacks. The platform still enforces board, team, repository, item, and personal-board grants
+server-side.
 
 `CSweet.WorkManagement.Contracts` is the dependency-light .NET wire contract shared by the
 C-Sweet platform broker and `CSweet.Agent.SDK`.

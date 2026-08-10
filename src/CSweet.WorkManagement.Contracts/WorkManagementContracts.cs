@@ -100,6 +100,30 @@ public static class WorkBoardKinds
     public const string Personal = "Personal";
 }
 
+public static class WorkItemMentionFields
+{
+    public const string Title = "Title";
+    public const string Description = "Description";
+
+    public static IReadOnlySet<string> All { get; } = new HashSet<string>(
+        [Title, Description], StringComparer.Ordinal);
+}
+
+public sealed record WorkItemMentionInput(
+    Guid OrganizationUserId,
+    string Field,
+    int Offset,
+    int Length);
+
+public sealed record WorkItemMentionSpan(
+    Guid OrganizationUserId,
+    string DisplayName,
+    string EmployeeType,
+    string Field,
+    int Offset,
+    int Length,
+    string DisplayText);
+
 public static class WorkAssignmentRelationships
 {
     public const string DirectAssignee = "DirectAssignee";
@@ -135,6 +159,7 @@ public sealed record WorkItemResponse(
     public WorkItemProvenance? Provenance { get; init; }
     public WorkAssignmentMetadata? Assignment { get; init; }
     public WorkItemExecutionMetadata? Execution { get; init; }
+    public IReadOnlyList<WorkItemMentionSpan> Mentions { get; init; } = [];
 }
 
 public sealed record WorkItemProvenance(
@@ -244,7 +269,10 @@ public sealed record PersonalTodoItem(
     string? BlockReason,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    DateTimeOffset? ArchivedAt = null);
+    DateTimeOffset? ArchivedAt = null)
+{
+    public IReadOnlyList<WorkItemMentionSpan> MentionSpans { get; init; } = [];
+}
 
 public sealed record PersonalTodoDirectory(
     IReadOnlyList<PersonalTodoBoard> Boards,
@@ -260,7 +288,8 @@ public sealed record AddPersonalTodoItemRequest(
     Guid? SourceConversationId = null,
     Guid? SourceMessageId = null,
     string? CorrelationId = null,
-    string? CausationId = null);
+    string? CausationId = null,
+    IReadOnlyList<WorkItemMentionInput>? Mentions = null);
 
 public sealed record UpdatePersonalTodoItemRequest(
     Guid ItemId,
@@ -269,7 +298,8 @@ public sealed record UpdatePersonalTodoItemRequest(
     string Priority,
     DateTimeOffset? DueDate,
     long ExpectedRevision,
-    string IdempotencyKey);
+    string IdempotencyKey,
+    IReadOnlyList<WorkItemMentionInput>? Mentions = null);
 
 public sealed record ArchivePersonalTodoItemRequest(
     Guid ItemId,
@@ -411,6 +441,7 @@ public sealed record WorkItem(
     public string? Identifier { get; init; }
     public Guid? AccountableOrganizationUserId { get; init; }
     public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
+    public IReadOnlyList<WorkItemMentionSpan> Mentions { get; init; } = [];
 }
 public sealed record WorkBoardDetail(
     WorkBoardSummary Board, IReadOnlyList<WorkBoardColumn> Columns, IReadOnlyList<WorkItem> Items);
@@ -421,6 +452,7 @@ public sealed record CreateWorkItemRequest(
     public WorkItemDeliverySpecification? Delivery { get; init; }
     public Guid? AccountableOrganizationUserId { get; init; }
     public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
+    public IReadOnlyList<WorkItemMentionInput> Mentions { get; init; } = [];
 }
 public sealed record AssignWorkItemRequest(
     Guid BoardId,
