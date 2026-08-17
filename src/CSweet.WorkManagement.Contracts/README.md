@@ -1,5 +1,7 @@
 # C-Sweet Work Management Contracts
 
+Version 3.6 adds repository-independent work-item planning specifications and idempotent delivery finalization.
+
 Canonical capability names and wire DTOs shared by the C-Sweet platform broker and
 `CSweet.Agent.SDK`.
 

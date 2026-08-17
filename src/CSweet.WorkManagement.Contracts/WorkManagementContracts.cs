@@ -17,6 +17,7 @@ public static class WorkManagementCapabilityNames
     public const string OrchestrationConfigureSoftwareTemplate = "work.orchestration.software-template.configure";
     public const string ItemRead = "work.item.read";
     public const string ItemCreate = "work.item.create";
+    public const string ItemFinalizeDelivery = "work.item.delivery.finalize";
     public const string ItemComment = "work.item.comment";
     public const string ItemEstimate = "work.item.estimate";
     public const string ItemStart = "work.item.start";
@@ -53,7 +54,7 @@ public static class WorkManagementCapabilityNames
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
         BoardRead, BoardCreate, BoardConfigureColumns,
-        ItemRead, ItemCreate, ItemComment, ItemEstimate, ItemMove, ItemTransfer,
+        ItemRead, ItemCreate, ItemFinalizeDelivery, ItemComment, ItemEstimate, ItemMove, ItemTransfer,
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
@@ -442,9 +443,17 @@ public sealed record WorkItemDeliverySpecification(
     IReadOnlyList<string> AcceptanceCriteria,
     IReadOnlyList<string>? Constraints = null)
 {
+    public string BaseBranch { get; init; } = string.Empty;
     public Guid? QualityGateColumnId { get; init; }
     public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
     public bool IsQaTrackingDefect { get; init; }
+}
+public sealed record WorkItemPlanningSpecification(
+    IReadOnlyList<string> Requirements,
+    IReadOnlyList<string> AcceptanceCriteria,
+    IReadOnlyList<string>? Constraints = null)
+{
+    public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
 }
 public sealed record WorkItem(
     Guid Id, Guid ColumnId, Guid? ParentItemId, Guid? SprintId, string Kind,
@@ -456,6 +465,7 @@ public sealed record WorkItem(
     string? AssignedDisplayName = null,
     SoftwareDevelopmentBrief? Development = null)
 {
+    public WorkItemPlanningSpecification? Planning { get; init; }
     public SoftwareQualityBrief? Quality { get; init; }
     public WorkItemDeliverySpecification? Delivery { get; init; }
     public string? Identifier { get; init; }
@@ -469,11 +479,20 @@ public sealed record CreateWorkItemRequest(
     Guid BoardId, string Title, string? Description, string Kind, string Priority,
     Guid? ColumnId, Guid? ParentItemId, DateTimeOffset? DueDate, string IdempotencyKey)
 {
+    public WorkItemPlanningSpecification? Planning { get; init; }
     public WorkItemDeliverySpecification? Delivery { get; init; }
     public Guid? AccountableOrganizationUserId { get; init; }
     public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
     public IReadOnlyList<WorkItemMentionInput> Mentions { get; init; } = [];
 }
+public sealed record FinalizeWorkItemDeliveryRequest(
+    Guid BoardId,
+    Guid ItemId,
+    WorkItemDeliverySpecification Delivery,
+    Guid AccountableOrganizationUserId,
+    IReadOnlyList<WorkStageAssignment> StageAssignments,
+    long ExpectedRevision,
+    string IdempotencyKey);
 public sealed record AssignWorkItemRequest(
     Guid BoardId,
     Guid ItemId,
