@@ -1,5 +1,8 @@
 # C-Sweet Work Management Contracts
 
+Version 3.7 adds grant-governed board metadata configuration through
+`work.board.configure`, including optimistic concurrency and idempotency fields.
+
 Version 3.5 adds durable in-progress waiting. The SDK can release a transient execution claim
 while leaving the personal item in `Running`/Doing until an external event resumes it. Version 3.4
 added sequenced personal work through `Backlog` and explicit activation. Personal items also expose

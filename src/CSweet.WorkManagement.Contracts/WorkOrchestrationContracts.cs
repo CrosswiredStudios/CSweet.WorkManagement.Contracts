@@ -27,6 +27,7 @@ public static class WorkMergeModes
 
 public static class WorkOrchestrationPrincipalKinds
 {
+    public const string Unassigned = "Unassigned";
     public const string Human = "Human";
     public const string AgentInstallation = "AgentInstallation";
     public const string BoardManager = "BoardManager";

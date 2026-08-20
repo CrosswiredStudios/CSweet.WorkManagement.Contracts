@@ -5,6 +5,12 @@ namespace CSweet.WorkManagement.Contracts.Tests;
 public sealed class WorkManagementContractsTests
 {
     [Fact]
+    public void UnassignedPrincipal_IsPublicForSafelyBlockedFutureStages()
+    {
+        Assert.Equal("Unassigned", WorkOrchestrationPrincipalKinds.Unassigned);
+    }
+
+    [Fact]
     public void ActiveCapabilityNames_AreUniqueAndExcludeRetiredExecutionPaths()
     {
         var constants = typeof(WorkManagementCapabilityNames)
@@ -20,6 +26,7 @@ public sealed class WorkManagementContractsTests
             WorkManagementCapabilityNames.All.Distinct(StringComparer.Ordinal).Count());
         Assert.All(WorkManagementCapabilityNames.All, capability => Assert.Contains(capability, constants));
         Assert.Contains(WorkManagementCapabilityNames.ItemMove, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.BoardConfigure, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.BoardConfigureColumns, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.OrchestrationConfigureSoftwareTemplate,
             WorkManagementCapabilityNames.All);

@@ -13,6 +13,7 @@ public static class WorkManagementCapabilityNames
     public const string OrchestrationRetry = "work.orchestration.retry";
     public const string BoardRead = "work.board.read";
     public const string BoardCreate = "work.board.create";
+    public const string BoardConfigure = "work.board.configure";
     public const string BoardConfigureColumns = "work.board.columns.configure";
     public const string OrchestrationConfigureSoftwareTemplate = "work.orchestration.software-template.configure";
     public const string ItemRead = "work.item.read";
@@ -53,7 +54,7 @@ public static class WorkManagementCapabilityNames
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
-        BoardRead, BoardCreate, BoardConfigureColumns,
+        BoardRead, BoardCreate, BoardConfigure, BoardConfigureColumns,
         ItemRead, ItemCreate, ItemFinalizeDelivery, ItemComment, ItemEstimate, ItemMove, ItemTransfer,
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
@@ -391,6 +392,12 @@ public sealed record CreateWorkBoardRequest(string Name, string? Description, st
     public Guid? TeamId { get; init; }
     public string? Key { get; init; }
 }
+public sealed record ConfigureWorkBoardRequest(
+    Guid BoardId,
+    long ExpectedRevision,
+    string Name,
+    string? Description,
+    string IdempotencyKey);
 public sealed record WorkBoardSummary(
     Guid Id, string Name, string Description, bool IsDefault, bool IsArchived,
     long Revision, IReadOnlyList<string> AllowedActions)
