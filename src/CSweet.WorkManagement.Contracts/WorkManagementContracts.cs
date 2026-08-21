@@ -48,6 +48,7 @@ public static class WorkManagementCapabilityNames
     public const string PersonalTodoComplete = "work.personal-todo.complete.v1";
     public const string PersonalTodoBlock = "work.personal-todo.block.v1";
     public const string PersonalTodoRelease = "work.personal-todo.release.v1";
+    public const string PersonalTodoDefer = "work.personal-todo.defer.v1";
     public const string PersonalTodoUpdate = "work.personal-todo.update.v1";
     public const string PersonalTodoArchive = "work.personal-todo.archive.v1";
     public const string PersonalTodoRestore = "work.personal-todo.restore.v1";
@@ -64,6 +65,7 @@ public static class WorkManagementCapabilityNames
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
         PersonalTodoActivate,
         PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,
+        PersonalTodoDefer,
         PersonalTodoUpdate, PersonalTodoArchive, PersonalTodoRestore
     ], StringComparer.Ordinal);
 }
@@ -227,6 +229,7 @@ public static class PersonalTodoCapabilities
     public const string Complete = WorkManagementCapabilityNames.PersonalTodoComplete;
     public const string Block = WorkManagementCapabilityNames.PersonalTodoBlock;
     public const string Release = WorkManagementCapabilityNames.PersonalTodoRelease;
+    public const string Defer = WorkManagementCapabilityNames.PersonalTodoDefer;
     public const string Update = WorkManagementCapabilityNames.PersonalTodoUpdate;
     public const string Archive = WorkManagementCapabilityNames.PersonalTodoArchive;
     public const string Restore = WorkManagementCapabilityNames.PersonalTodoRestore;
@@ -255,6 +258,11 @@ public sealed record PersonalTodoMention(
     string DisplayName,
     string EmployeeType);
 
+public sealed record PersonalTodoWaitState(
+    DateTimeOffset NextReviewAt,
+    string Reason,
+    Guid? WaitingOnOrganizationUserId = null);
+
 public sealed record PersonalTodoItem(
     Guid Id,
     Guid BoardId,
@@ -279,6 +287,7 @@ public sealed record PersonalTodoItem(
 {
     public IReadOnlyList<WorkItemMentionSpan> MentionSpans { get; init; } = [];
     public string? CorrelationId { get; init; }
+    public PersonalTodoWaitState? Wait { get; init; }
 }
 
 public sealed record PersonalTodoDirectory(
@@ -378,6 +387,15 @@ public sealed record ReleasePersonalTodoItemRequest(
     /// </summary>
     public bool KeepInProgress { get; init; }
 }
+
+public sealed record DeferPersonalTodoItemRequest(
+    Guid ItemId,
+    Guid EventId,
+    long ExpectedRevision,
+    DateTimeOffset NextReviewAt,
+    string Reason,
+    Guid? WaitingOnOrganizationUserId,
+    string IdempotencyKey);
 
 public sealed record PersonalTodoAvailableEvent(
     Guid OwnerOrganizationUserId,

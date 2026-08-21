@@ -35,6 +35,7 @@ public sealed class WorkManagementContractsTests
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoAdd, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoClaim, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoActivate, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.PersonalTodoDefer, WorkManagementCapabilityNames.All);
     }
 
     [Fact]
@@ -49,6 +50,10 @@ public sealed class WorkManagementContractsTests
             Guid.NewGuid(), Guid.NewGuid(), 1, "release").KeepInProgress);
         Assert.True(new ReleasePersonalTodoItemRequest(
             Guid.NewGuid(), Guid.NewGuid(), 1, "release") { KeepInProgress = true }.KeepInProgress);
+        var reviewAt = DateTimeOffset.UtcNow.AddMinutes(5);
+        var defer = new DeferPersonalTodoItemRequest(
+            Guid.NewGuid(), Guid.NewGuid(), 1, reviewAt, "Awaiting a response.", Guid.NewGuid(), "defer");
+        Assert.Equal(reviewAt, defer.NextReviewAt);
     }
 
     [Fact]
