@@ -1,6 +1,7 @@
 # C-Sweet Work Management Contracts
 
-Version 3.7 adds grant-governed board metadata configuration through
+Version 3.9 adds technical delegation recommendations, correlated work-item comments, and public
+orchestration read/retry contracts for continuous agent collaboration. Version 3.7 adds grant-governed board metadata configuration through
 `work.board.configure`, including optimistic concurrency and idempotency fields.
 
 Version 3.5 adds durable in-progress waiting. The SDK can release a transient execution claim

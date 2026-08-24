@@ -36,6 +36,7 @@ public sealed class WorkManagementContractsTests
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoClaim, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoActivate, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoDefer, WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.ItemCommentsRead, WorkManagementCapabilityNames.All);
     }
 
     [Fact]
@@ -95,6 +96,49 @@ public sealed class WorkManagementContractsTests
         Assert.DoesNotContain("TargetStageKey", properties);
         Assert.Contains("OutcomeCode", properties);
         Assert.Contains("Disposition", properties);
+    }
+
+    [Fact]
+    public void TechnicalDelegation_IsAdviceWithoutPrincipalIdentity()
+    {
+        var recommendation = new WorkTechnicalDelegationRecommendation(
+            "Development", "software-developer", ["repository.change.write"], "backend", false,
+            "Requires implementation authority.");
+        var properties = typeof(WorkTechnicalDelegationRecommendation).GetProperties()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.Equal("software-developer", recommendation.RequiredRoleKey);
+        Assert.DoesNotContain("EmployeeId", properties);
+        Assert.DoesNotContain("AgentInstallationId", properties);
+        var digest = new string('a', 64);
+        var planning = new WorkItemPlanningSpecification(["Implement."], ["Tests pass."])
+        {
+            DelegationRecommendations = [recommendation],
+            ArchitectureArtifactDigest = digest
+        };
+        Assert.Equal(digest, planning.ArchitectureArtifactDigest);
+    }
+
+    [Fact]
+    public void SupportContracts_PinCommentsAndRetriesToAuthoritativeWork()
+    {
+        var sessionId = Guid.NewGuid();
+        var comment = new CommentOnWorkItemRequest(Guid.NewGuid(), Guid.NewGuid(), "Guidance", "comment-1")
+        {
+            Kind = "ArchitectureGuidance",
+            CoordinationSessionId = sessionId,
+            CausationId = "support-1",
+            ArtifactDigest = "sha256:abc"
+        };
+        var retry = new RetryWorkStageExecutionRequest(
+            comment.BoardId, Guid.NewGuid(), Guid.NewGuid(), "retry-1")
+        {
+            ExpectedAssignmentRevision = 12
+        };
+
+        Assert.Equal(sessionId, comment.CoordinationSessionId);
+        Assert.Equal(12, retry.ExpectedAssignmentRevision);
     }
 
     [Fact]

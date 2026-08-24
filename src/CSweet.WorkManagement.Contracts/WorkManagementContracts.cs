@@ -20,6 +20,7 @@ public static class WorkManagementCapabilityNames
     public const string ItemCreate = "work.item.create";
     public const string ItemFinalizeDelivery = "work.item.delivery.finalize";
     public const string ItemComment = "work.item.comment";
+    public const string ItemCommentsRead = "work.item.comments.read";
     public const string ItemEstimate = "work.item.estimate";
     public const string ItemStart = "work.item.start";
     public const string ItemMove = "work.item.move";
@@ -56,7 +57,7 @@ public static class WorkManagementCapabilityNames
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
         BoardRead, BoardCreate, BoardConfigure, BoardConfigureColumns,
-        ItemRead, ItemCreate, ItemFinalizeDelivery, ItemComment, ItemEstimate, ItemMove, ItemTransfer,
+        ItemRead, ItemCreate, ItemFinalizeDelivery, ItemComment, ItemCommentsRead, ItemEstimate, ItemMove, ItemTransfer,
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
@@ -479,7 +480,21 @@ public sealed record WorkItemPlanningSpecification(
     IReadOnlyList<string>? Constraints = null)
 {
     public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
+    public IReadOnlyList<WorkTechnicalDelegationRecommendation> DelegationRecommendations { get; init; } = [];
+    /// <summary>Digest of the exact approved coordination design that governs this planned item.</summary>
+    public string? ArchitectureArtifactDigest { get; init; }
 }
+/// <summary>
+/// Technical eligibility and sequencing advice supplied by an architecture authority. This is not
+/// an assignment: principal and installation identifiers are deliberately excluded.
+/// </summary>
+public sealed record WorkTechnicalDelegationRecommendation(
+    string StageKey,
+    string RequiredRoleKey,
+    IReadOnlyList<string> RequiredCapabilityKeys,
+    string? ParallelizationGroup,
+    bool SpecialistRequired,
+    string Rationale);
 public sealed record WorkItem(
     Guid Id, Guid ColumnId, Guid? ParentItemId, Guid? SprintId, string Kind,
     string Title, string Description, string Status, string Priority,
@@ -531,11 +546,35 @@ public sealed record WorkItemAssignedEvent(
     long AssignmentRevision,
     Guid AssignedInstallationId);
 public sealed record CommentOnWorkItemRequest(
-    Guid BoardId, Guid ItemId, string Body, string IdempotencyKey);
+    Guid BoardId, Guid ItemId, string Body, string IdempotencyKey)
+{
+    public string? Kind { get; init; }
+    public Guid? CoordinationSessionId { get; init; }
+    public string? CausationId { get; init; }
+    public string? ArtifactDigest { get; init; }
+}
 public sealed record WorkItemComment(
     Guid Id, Guid WorkItemId, string AuthorKind, Guid AuthorSubjectId,
     string AuthorDisplayName, string Body, long Revision,
-    DateTimeOffset CreatedAt, DateTimeOffset? EditedAt);
+    DateTimeOffset CreatedAt, DateTimeOffset? EditedAt)
+{
+    public string? Kind { get; init; }
+    public Guid? CoordinationSessionId { get; init; }
+    public string? CausationId { get; init; }
+    public string? ArtifactDigest { get; init; }
+}
+public sealed record ReadWorkItemCommentsRequest(
+    Guid BoardId,
+    Guid ItemId,
+    string? Kind = null,
+    int Page = 1,
+    int PageSize = 100);
+public sealed record WorkItemCommentPage(
+    IReadOnlyList<WorkItemComment> Items,
+    int Page,
+    int PageSize,
+    bool HasMore,
+    long SourceRevision);
 public sealed record EstimateWorkItemRequest(
     Guid BoardId, Guid ItemId, decimal? EstimatePoints,
     long ExpectedItemRevision, string IdempotencyKey);
