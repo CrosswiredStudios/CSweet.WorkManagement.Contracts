@@ -1,9 +1,61 @@
 using System.Reflection;
+using System.Text.Json;
 
 namespace CSweet.WorkManagement.Contracts.Tests;
 
 public sealed class WorkManagementContractsTests
 {
+    [Fact]
+    public void ManagerLedPlanningContracts_RoundTripNextDirectiveAndClarifications()
+    {
+        var brief = new IncrementalProductBrief(
+            Guid.NewGuid(), "plan-1", "Ship the first playable release",
+            ["A player can complete the core loop."], ["The core loop is demonstrable."],
+            new IncrementalEpic("EPIC-1", "Playable release", "Deliver a playable release", ["Playable"]),
+            ArchitecturePlanningStages.Design)
+        {
+            ProductDecisions =
+            [
+                new ProductPlanningDecision(
+                    "core-loop", "Three-lap arcade race", "PM product judgment",
+                    new Dictionary<string, string> { ["charter"] = "3" })
+            ],
+            RespondsToArtifactDigest = new string('a', 64)
+        };
+        var decision = new ProductArchitectureDecision(
+            "plan-1", new string('b', 64), "approved", "Complete and traceable", 0)
+        {
+            NextDirective = brief with
+            {
+                Stage = ArchitecturePlanningStages.Stories,
+                ApprovedDesignDigest = new string('b', 64)
+            }
+        };
+
+        var json = JsonSerializer.Serialize(decision);
+        var roundTrip = JsonSerializer.Deserialize<ProductArchitectureDecision>(json);
+
+        Assert.NotNull(roundTrip?.NextDirective);
+        Assert.Equal(ArchitecturePlanningStages.Stories, roundTrip.NextDirective.Stage);
+        Assert.Equal("core-loop", Assert.Single(roundTrip.NextDirective.ProductDecisions).QuestionId);
+    }
+
+    [Fact]
+    public void ClarificationV2_SupportsMultipleStableQuestions()
+    {
+        var request = new SoftwareArchitectureClarificationRequest(
+            "plan-1", ArchitecturePlanningStages.Design, "EPIC-1",
+            [
+                new("core-loop", "What is the core loop?", "Defines system boundaries.", "product-scope"),
+                new("platform", "Which browsers are required?", "Defines compatibility.", "platform")
+            ],
+            new Dictionary<string, string> { ["board"] = "7" });
+
+        Assert.Equal("software-architecture.question.v2", ArchitecturePlanningArtifactTypes.QuestionV2);
+        Assert.Equal(2, request.Questions.Count);
+        Assert.Equal(2, request.Questions.Select(x => x.Id).Distinct(StringComparer.Ordinal).Count());
+    }
+
     [Fact]
     public void UnassignedPrincipal_IsPublicForSafelyBlockedFutureStages()
     {
