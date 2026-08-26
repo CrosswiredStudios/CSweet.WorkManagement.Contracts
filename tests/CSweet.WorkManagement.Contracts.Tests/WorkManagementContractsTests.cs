@@ -6,6 +6,57 @@ namespace CSweet.WorkManagement.Contracts.Tests;
 public sealed class WorkManagementContractsTests
 {
     [Fact]
+    public void TypedWorkCatalog_SeparatesHierarchyFromDomainPolicy()
+    {
+        var softwareStory = new WorkItemTypeDefinition(
+            WorkItemTypeKeys.SoftwareStoryV1,
+            "Software Story",
+            WorkItemKinds.Story,
+            [WorkBoardProfileKeys.SoftwareDeliveryV1],
+            [WorkItemTypeKeys.SoftwareEpicV1],
+            WorkItemTypeProviderKeys.Platform,
+            [WorkItemApprovalPolicyKeys.SoftwareArchitectureReviewV1]);
+        var generalStory = new WorkItemTypeDefinition(
+            WorkItemTypeKeys.GeneralStoryV1,
+            "Story",
+            WorkItemKinds.Story,
+            [WorkBoardProfileKeys.GeneralWorkV1],
+            [WorkItemTypeKeys.GeneralEpicV1],
+            WorkItemTypeProviderKeys.Platform,
+            []);
+
+        Assert.Equal(softwareStory.Kind, generalStory.Kind);
+        Assert.NotEqual(softwareStory.Key, generalStory.Key);
+        Assert.Equal(WorkItemApprovalPolicyKeys.SoftwareArchitectureReviewV1,
+            Assert.Single(softwareStory.RequiredApprovalPolicyKeys));
+        Assert.Empty(generalStory.RequiredApprovalPolicyKeys);
+    }
+
+    [Fact]
+    public void WorkItemApproval_PinsTheExactPlanningRevisionAndProvenance()
+    {
+        var sessionId = Guid.NewGuid();
+        var approval = new WorkItemApproval(
+            Guid.NewGuid(),
+            WorkItemApprovalPolicyKeys.SoftwareArchitectureReviewV1,
+            WorkItemApprovalStatuses.Approved,
+            7,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "software-architect",
+            new string('a', 64),
+            sessionId,
+            "The exact revision is technically executable.",
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow);
+        var provenance = new WorkItemProposalProvenance(sessionId, new string('a', 64), "TASK-7");
+
+        Assert.Equal(7, approval.PlanningRevision);
+        Assert.Equal(approval.CoordinationSessionId, provenance.CoordinationSessionId);
+        Assert.Equal(approval.ArtifactDigest, provenance.ArtifactDigest);
+    }
+
+    [Fact]
     public void ManagerLedPlanningContracts_RoundTripNextDirectiveAndClarifications()
     {
         var brief = new IncrementalProductBrief(

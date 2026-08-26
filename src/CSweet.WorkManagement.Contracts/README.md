@@ -1,6 +1,7 @@
 # C-Sweet Work Management Contracts
 
-Version 3.9 adds technical delegation recommendations, correlated work-item comments, and public
+Version 3.11 adds platform-owned work-item types and board profiles, planning revisions, reusable
+approval policies, proposal provenance, and architecture-review events. Version 3.9 adds technical delegation recommendations, correlated work-item comments, and public
 orchestration read/retry contracts. Version 3.6 adds repository-independent work-item planning specifications and idempotent delivery finalization.
 
 Canonical capability names and wire DTOs shared by the C-Sweet platform broker and

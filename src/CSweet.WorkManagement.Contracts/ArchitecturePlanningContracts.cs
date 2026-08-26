@@ -149,7 +149,10 @@ public sealed record PublishStoryTasksRequest(
     Guid SprintId,
     IncrementalTaskProposal Proposal,
     string ApprovalRationale,
-    string IdempotencyKey);
+    string IdempotencyKey)
+{
+    public WorkItemProposalProvenance? ProposalProvenance { get; init; }
+}
 
 public sealed record PublishStoryTasksResponse(
     Guid BoardId,

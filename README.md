@@ -1,6 +1,7 @@
 # C-Sweet Work Management Contracts
 
-Version 3.9 adds technical delegation recommendations, correlated work-item comments, and public
+Version 3.11 adds platform-owned work-item types and board profiles, planning revisions, reusable
+approval policies, proposal provenance, and architecture-review events. Version 3.9 adds technical delegation recommendations, correlated work-item comments, and public
 orchestration read/retry contracts for continuous agent collaboration. Version 3.7 adds grant-governed board metadata configuration through
 `work.board.configure`, including optimistic concurrency and idempotency fields.
 

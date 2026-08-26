@@ -18,6 +18,9 @@ public static class WorkManagementCapabilityNames
     public const string OrchestrationConfigureSoftwareTemplate = "work.orchestration.software-template.configure";
     public const string ItemRead = "work.item.read";
     public const string ItemCreate = "work.item.create";
+    public const string ItemTypesReadV1 = "work.item.types.read.v1";
+    public const string ItemPlanningReviseV1 = "work.item.planning.revise.v1";
+    public const string ItemApprovalDecideV1 = "work.item.approval.decide.v1";
     public const string ItemFinalizeDelivery = "work.item.delivery.finalize";
     public const string ItemComment = "work.item.comment";
     public const string ItemCommentsRead = "work.item.comments.read";
@@ -57,7 +60,8 @@ public static class WorkManagementCapabilityNames
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
         BoardRead, BoardCreate, BoardConfigure, BoardConfigureColumns,
-        ItemRead, ItemCreate, ItemFinalizeDelivery, ItemComment, ItemCommentsRead, ItemEstimate, ItemMove, ItemTransfer,
+        ItemRead, ItemCreate, ItemTypesReadV1, ItemPlanningReviseV1, ItemApprovalDecideV1,
+        ItemFinalizeDelivery, ItemComment, ItemCommentsRead, ItemEstimate, ItemMove, ItemTransfer,
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
@@ -78,6 +82,97 @@ public static class WorkItemKinds
     public const string Story = "Story";
     public const string Task = "Task";
     public const string Bug = "Bug";
+}
+
+/// <summary>Platform-owned board profiles. A profile becomes immutable after the first item.</summary>
+public static class WorkBoardProfileKeys
+{
+    public const string GeneralWorkV1 = "general-work.v1";
+    public const string SoftwareDeliveryV1 = "software-delivery.v1";
+}
+
+/// <summary>Stable provider-neutral work type keys. Kind is derived from these definitions.</summary>
+public static class WorkItemTypeKeys
+{
+    public const string GeneralInitiativeV1 = "general.initiative.v1";
+    public const string GeneralEpicV1 = "general.epic.v1";
+    public const string GeneralStoryV1 = "general.story.v1";
+    public const string GeneralTaskV1 = "general.task.v1";
+    public const string SoftwareEpicV1 = "software.epic.v1";
+    public const string SoftwareStoryV1 = "software.story.v1";
+    public const string SoftwareTaskV1 = "software.task.v1";
+}
+
+public static class WorkItemApprovalPolicyKeys
+{
+    public const string SoftwareArchitectureReviewV1 = "software.architecture-review.v1";
+}
+
+public static class WorkItemTypeProviderKeys
+{
+    public const string Platform = "com.csweet.platform.work-types";
+}
+
+public static class WorkItemApprovalStatuses
+{
+    public const string Pending = "Pending";
+    public const string Approved = "Approved";
+    public const string ChangesRequested = "ChangesRequested";
+    public const string Waived = "Waived";
+
+    public static IReadOnlySet<string> All { get; } = new HashSet<string>(
+        [Pending, Approved, ChangesRequested, Waived], StringComparer.Ordinal);
+}
+
+public sealed record WorkBoardProfileDefinition(
+    string Key,
+    string DisplayName,
+    IReadOnlyList<string> PermittedTypeKeys,
+    string? OrchestrationTemplateKey);
+
+public sealed record WorkItemApprovalPolicyDefinition(
+    string Key,
+    string DisplayName,
+    string ProviderKey,
+    string RequiredRoleCategory);
+
+public sealed record WorkItemTypeDefinition(
+    string Key,
+    string DisplayName,
+    string Kind,
+    IReadOnlyList<string> CompatibleBoardProfiles,
+    IReadOnlyList<string> PermittedParentTypeKeys,
+    string ProviderKey,
+    IReadOnlyList<string> RequiredApprovalPolicyKeys);
+
+public sealed record WorkItemTypeCatalog(
+    long Revision,
+    IReadOnlyList<WorkBoardProfileDefinition> BoardProfiles,
+    IReadOnlyList<WorkItemTypeDefinition> Types,
+    IReadOnlyList<WorkItemApprovalPolicyDefinition> ApprovalPolicies);
+
+public sealed record ReadWorkItemTypesRequest(string? BoardProfileKey = null);
+
+public sealed record WorkItemProposalProvenance(
+    Guid CoordinationSessionId,
+    string ArtifactDigest,
+    string ProposalItemKey);
+
+public sealed record WorkItemApproval(
+    Guid Id,
+    string PolicyKey,
+    string Status,
+    long PlanningRevision,
+    Guid? ApproverEmployeeId,
+    Guid? ApproverInstallationId,
+    string RequiredRoleCategory,
+    string? ArtifactDigest,
+    Guid? CoordinationSessionId,
+    string? Rationale,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt)
+{
+    public string? ManagerWaiverSource { get; init; }
 }
 
 public static class WorkPriorities
@@ -160,6 +255,8 @@ public sealed record WorkItemResponse(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? ArchivedAt = null)
 {
+    public string TypeKey { get; init; } = string.Empty;
+    public long PlanningRevision { get; init; }
     public string? Identifier { get; init; }
     public Guid? SprintId { get; init; }
     public decimal? EstimatePoints { get; init; }
@@ -167,6 +264,8 @@ public sealed record WorkItemResponse(
     public WorkAssignmentMetadata? Assignment { get; init; }
     public WorkItemExecutionMetadata? Execution { get; init; }
     public IReadOnlyList<WorkItemMentionSpan> Mentions { get; init; } = [];
+    public IReadOnlyList<WorkItemApproval> Approvals { get; init; } = [];
+    public WorkItemProposalProvenance? ProposalProvenance { get; init; }
 }
 
 public sealed record WorkItemProvenance(
@@ -212,6 +311,8 @@ public static class WorkAutomationTriggers
 public static class WorkItemEvents
 {
     public const string Assigned = "work.item.assigned.v1";
+    public const string ApprovalRequired = "com.csweet.work.item.approval-required.v1";
+    public const string ApprovalDecided = "com.csweet.work.item.approval-decided.v1";
 }
 
 public static class PersonalTodoEvents
@@ -410,6 +511,7 @@ public sealed record CreateWorkBoardRequest(string Name, string? Description, st
 {
     public Guid? TeamId { get; init; }
     public string? Key { get; init; }
+    public string ProfileKey { get; init; } = WorkBoardProfileKeys.GeneralWorkV1;
 }
 public sealed record ConfigureWorkBoardRequest(
     Guid BoardId,
@@ -424,6 +526,7 @@ public sealed record WorkBoardSummary(
     public Guid? TeamId { get; init; }
     public Guid? ManagerOrganizationUserId { get; init; }
     public string? Key { get; init; }
+    public string ProfileKey { get; init; } = WorkBoardProfileKeys.GeneralWorkV1;
 }
 public sealed record WorkBoardColumn(
     Guid Id, string Name, string Category, int Position, string WipPolicy, int? WipLimit);
@@ -505,6 +608,8 @@ public sealed record WorkItem(
     string? AssignedDisplayName = null,
     SoftwareDevelopmentBrief? Development = null)
 {
+    public string TypeKey { get; init; } = string.Empty;
+    public long PlanningRevision { get; init; }
     public WorkItemPlanningSpecification? Planning { get; init; }
     public SoftwareQualityBrief? Quality { get; init; }
     public WorkItemDeliverySpecification? Delivery { get; init; }
@@ -512,6 +617,8 @@ public sealed record WorkItem(
     public Guid? AccountableOrganizationUserId { get; init; }
     public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
     public IReadOnlyList<WorkItemMentionSpan> Mentions { get; init; } = [];
+    public IReadOnlyList<WorkItemApproval> Approvals { get; init; } = [];
+    public WorkItemProposalProvenance? ProposalProvenance { get; init; }
 }
 public sealed record WorkBoardDetail(
     WorkBoardSummary Board, IReadOnlyList<WorkBoardColumn> Columns, IReadOnlyList<WorkItem> Items);
@@ -519,12 +626,58 @@ public sealed record CreateWorkItemRequest(
     Guid BoardId, string Title, string? Description, string Kind, string Priority,
     Guid? ColumnId, Guid? ParentItemId, DateTimeOffset? DueDate, string IdempotencyKey)
 {
+    public string TypeKey { get; init; } = string.Empty;
     public WorkItemPlanningSpecification? Planning { get; init; }
     public WorkItemDeliverySpecification? Delivery { get; init; }
     public Guid? AccountableOrganizationUserId { get; init; }
     public IReadOnlyList<WorkStageAssignment> StageAssignments { get; init; } = [];
     public IReadOnlyList<WorkItemMentionInput> Mentions { get; init; } = [];
+    public WorkItemProposalProvenance? ProposalProvenance { get; init; }
 }
+public sealed record ReviseWorkItemPlanningRequest(
+    Guid BoardId,
+    Guid ItemId,
+    string Title,
+    string? Description,
+    Guid? ParentItemId,
+    WorkItemPlanningSpecification Planning,
+    long ExpectedRevision,
+    long ExpectedPlanningRevision,
+    string IdempotencyKey)
+{
+    public WorkItemProposalProvenance? ProposalProvenance { get; init; }
+}
+public sealed record DecideWorkItemApprovalRequest(
+    Guid BoardId,
+    Guid ItemId,
+    string PolicyKey,
+    string Decision,
+    long ExpectedPlanningRevision,
+    string? Rationale,
+    string IdempotencyKey,
+    string? ManagerWaiverSource = null,
+    Guid? CoordinationSessionId = null,
+    string? ArtifactDigest = null);
+public sealed record WorkItemApprovalRequiredEvent(
+    Guid BoardId,
+    Guid ItemId,
+    string TypeKey,
+    string PolicyKey,
+    long PlanningRevision,
+    Guid ReviewerEmployeeId,
+    Guid ReviewerInstallationId,
+    Guid? CoordinationSessionId,
+    string? ArtifactDigest);
+public sealed record WorkItemApprovalDecidedEvent(
+    Guid BoardId,
+    Guid ItemId,
+    string TypeKey,
+    string PolicyKey,
+    string Status,
+    long PlanningRevision,
+    Guid? ApproverEmployeeId,
+    Guid? ApproverInstallationId,
+    string? Rationale);
 public sealed record FinalizeWorkItemDeliveryRequest(
     Guid BoardId,
     Guid ItemId,
