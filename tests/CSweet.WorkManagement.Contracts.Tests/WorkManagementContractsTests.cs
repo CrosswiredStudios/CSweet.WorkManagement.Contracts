@@ -224,6 +224,21 @@ public sealed class WorkManagementContractsTests
     }
 
     [Fact]
+    public void PlanningSpecification_CarriesApprovedGameDesignPackageDigest()
+    {
+        var document = new DesignPackageDocumentDigest(Guid.NewGuid(), Guid.NewGuid(),
+            "gameplay-systems", new string('a', 64));
+        var digest = new DesignPackageDigest(Guid.NewGuid(), 1, new string('b', 64),
+            DateTimeOffset.UtcNow, [document]);
+        var planning = new WorkItemPlanningSpecification(["Build the prototype."], ["Package is approved."])
+        {
+            DesignPackageDigest = digest
+        };
+
+        Assert.Equal(digest, planning.DesignPackageDigest);
+    }
+
+    [Fact]
     public void SupportContracts_PinCommentsAndRetriesToAuthoritativeWork()
     {
         var sessionId = Guid.NewGuid();

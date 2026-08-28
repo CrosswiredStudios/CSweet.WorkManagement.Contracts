@@ -89,6 +89,7 @@ public static class WorkBoardProfileKeys
 {
     public const string GeneralWorkV1 = "general-work.v1";
     public const string SoftwareDeliveryV1 = "software-delivery.v1";
+    public const string VideoGameProductionV1 = "video-game-production.v1";
 }
 
 /// <summary>Stable provider-neutral work type keys. Kind is derived from these definitions.</summary>
@@ -101,6 +102,9 @@ public static class WorkItemTypeKeys
     public const string SoftwareEpicV1 = "software.epic.v1";
     public const string SoftwareStoryV1 = "software.story.v1";
     public const string SoftwareTaskV1 = "software.task.v1";
+    public const string VideoGameEpicV1 = "video-game.epic.v1";
+    public const string VideoGameStoryV1 = "video-game.story.v1";
+    public const string VideoGameTaskV1 = "video-game.task.v1";
 }
 
 public static class WorkItemApprovalPolicyKeys
@@ -586,7 +590,22 @@ public sealed record WorkItemPlanningSpecification(
     public IReadOnlyList<WorkTechnicalDelegationRecommendation> DelegationRecommendations { get; init; } = [];
     /// <summary>Digest of the exact approved coordination design that governs this planned item.</summary>
     public string? ArchitectureArtifactDigest { get; init; }
+    /// <summary>Approved game-design package required before production work can execute.</summary>
+    public DesignPackageDigest? DesignPackageDigest { get; init; }
 }
+
+public sealed record DesignPackageDigest(
+    Guid PackageId,
+    int Version,
+    string Sha256,
+    DateTimeOffset ApprovedAt,
+    IReadOnlyList<DesignPackageDocumentDigest> Documents);
+
+public sealed record DesignPackageDocumentDigest(
+    Guid ArtifactId,
+    Guid AcceptedRevisionId,
+    string DocumentType,
+    string Sha256);
 /// <summary>
 /// Technical eligibility and sequencing advice supplied by an architecture authority. This is not
 /// an assignment: principal and installation identifiers are deliberately excluded.
