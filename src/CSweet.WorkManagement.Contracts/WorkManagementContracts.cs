@@ -89,7 +89,6 @@ public static class WorkBoardProfileKeys
 {
     public const string GeneralWorkV1 = "general-work.v1";
     public const string SoftwareDeliveryV1 = "software-delivery.v1";
-    public const string VideoGameProductionV1 = "video-game-production.v1";
 }
 
 /// <summary>Stable provider-neutral work type keys. Kind is derived from these definitions.</summary>
@@ -102,9 +101,6 @@ public static class WorkItemTypeKeys
     public const string SoftwareEpicV1 = "software.epic.v1";
     public const string SoftwareStoryV1 = "software.story.v1";
     public const string SoftwareTaskV1 = "software.task.v1";
-    public const string VideoGameEpicV1 = "video-game.epic.v1";
-    public const string VideoGameStoryV1 = "video-game.story.v1";
-    public const string VideoGameTaskV1 = "video-game.task.v1";
 }
 
 public static class WorkItemApprovalPolicyKeys
@@ -155,7 +151,7 @@ public sealed record WorkItemTypeCatalog(
     IReadOnlyList<WorkItemTypeDefinition> Types,
     IReadOnlyList<WorkItemApprovalPolicyDefinition> ApprovalPolicies);
 
-public sealed record ReadWorkItemTypesRequest(string? BoardProfileKey = null);
+public sealed record ReadWorkItemTypesRequest(string? BoardProfileKey = null, Guid? BoardId = null);
 
 public sealed record WorkItemProposalProvenance(
     Guid CoordinationSessionId,
@@ -514,6 +510,7 @@ public sealed record WorkItemReference(Guid BoardId, Guid ItemId);
 public sealed record CreateWorkBoardRequest(string Name, string? Description, string IdempotencyKey)
 {
     public Guid? TeamId { get; init; }
+    public Guid? WorkstreamId { get; init; }
     public string? Key { get; init; }
     public string ProfileKey { get; init; } = WorkBoardProfileKeys.GeneralWorkV1;
 }
@@ -528,6 +525,7 @@ public sealed record WorkBoardSummary(
     long Revision, IReadOnlyList<string> AllowedActions)
 {
     public Guid? TeamId { get; init; }
+    public Guid? WorkstreamId { get; init; }
     public Guid? ManagerOrganizationUserId { get; init; }
     public string? Key { get; init; }
     public string ProfileKey { get; init; } = WorkBoardProfileKeys.GeneralWorkV1;
@@ -590,21 +588,21 @@ public sealed record WorkItemPlanningSpecification(
     public IReadOnlyList<WorkTechnicalDelegationRecommendation> DelegationRecommendations { get; init; } = [];
     /// <summary>Digest of the exact approved coordination design that governs this planned item.</summary>
     public string? ArchitectureArtifactDigest { get; init; }
-    /// <summary>Approved game-design package required before production work can execute.</summary>
-    public DesignPackageDigest? DesignPackageDigest { get; init; }
+    /// <summary>Digest of an exact approved artifact package used as planning evidence.</summary>
+    public ArtifactPackageDigest? ArtifactPackageDigest { get; init; }
 }
 
-public sealed record DesignPackageDigest(
+public sealed record ArtifactPackageDigest(
     Guid PackageId,
     int Version,
     string Sha256,
     DateTimeOffset ApprovedAt,
-    IReadOnlyList<DesignPackageDocumentDigest> Documents);
+    IReadOnlyList<ArtifactPackageMemberDigest> Members);
 
-public sealed record DesignPackageDocumentDigest(
+public sealed record ArtifactPackageMemberDigest(
     Guid ArtifactId,
     Guid AcceptedRevisionId,
-    string DocumentType,
+    string TypeKey,
     string Sha256);
 /// <summary>
 /// Technical eligibility and sequencing advice supplied by an architecture authority. This is not

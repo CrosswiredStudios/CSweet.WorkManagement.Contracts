@@ -27,6 +27,7 @@ public static class DeliveryEvidenceCapabilityNames
     public const string ToolchainCatalogReadV1 = "platform.toolchain.catalog.read.v1";
     public const string BuildRequestV1 = "platform.build.request.v1";
     public const string BuildReadV1 = "platform.build.read.v1";
+    public const string BuildReportV1 = "platform.build.report.v1";
     public const string ValidationReadV1 = "platform.validation.read.v1";
     public const string PreviewCreateV1 = "platform.preview.create.v1";
     public const string PreviewReadV1 = "platform.preview.read.v1";
@@ -56,6 +57,7 @@ public static class WorkstreamEventNames
     public const string WorkItemChangedV1 = "com.csweet.work.item.changed.v1";
     public const string SprintChangedV1 = "com.csweet.work.sprint.changed.v1";
     public const string ExecutionChangedV1 = "com.csweet.work.execution.changed.v1";
+    public const string BuildRequestedV1 = "com.csweet.build.requested.v1";
     public const string BuildPublishedV1 = "com.csweet.build.published.v1";
     public const string ValidationCompletedV1 = "com.csweet.validation.completed.v1";
     public const string EvaluationCompletedV1 = "com.csweet.evaluation-session.completed.v1";
@@ -124,12 +126,18 @@ public sealed record WorkstreamMilestoneProposal(
     IReadOnlyList<string> RequiredEvidenceTypeKeys,
     IReadOnlyList<string> RequiredReviewerRoleKeys);
 
+public sealed record WorkstreamSupervisorProposal(
+    Guid SupervisorOrganizationUserId,
+    string RoleKey);
+
 public sealed record WorkstreamPlanProposalV2Request(
     string Name,
     string Outcome,
     IReadOnlyList<string> SuccessCriteria,
     string LifecycleStage,
-    string ManagerTitle,
+    Guid AccountableManagerOrganizationUserId,
+    Guid? InitialTeamId,
+    IReadOnlyList<WorkstreamSupervisorProposal> InitialSupervisors,
     IReadOnlyList<string> RequiredCapabilities,
     Guid? StrategicObjectiveId,
     DateTimeOffset? TargetDate,
@@ -141,7 +149,8 @@ public sealed record WorkstreamPlanProposalV2Request(
     int ProfileVersion,
     JsonElement ProfileData,
     WorkstreamAuthorityEnvelope AuthorityEnvelope,
-    IReadOnlyList<WorkstreamMilestoneProposal> InitialMilestones);
+    IReadOnlyList<WorkstreamMilestoneProposal> InitialMilestones,
+    IReadOnlyList<EvidenceReference> InitialEvidence);
 
 public sealed record ReadWorkstreamRequest(Guid WorkstreamId);
 
@@ -339,3 +348,150 @@ public sealed record GenericResourceEvent(
     string TypeKey,
     string Action,
     JsonElement Metadata);
+
+public sealed record ReadToolchainCatalogRequest(
+    string? ProfileKey = null,
+    IReadOnlyList<string>? TargetKeys = null,
+    IReadOnlyList<string>? RequiredOperations = null);
+
+public sealed record ToolchainAdapterSummary(
+    Guid Id,
+    string Key,
+    int Version,
+    string DisplayName,
+    string ProviderPackageId,
+    IReadOnlyList<string> Operations,
+    IReadOnlyList<string> TargetKeys,
+    JsonElement Requirements,
+    string DefinitionDigest,
+    string CertificationStatus,
+    DateTimeOffset? CertifiedAt);
+
+public sealed record RequestBuildRequest(
+    Guid WorkstreamId,
+    Guid? TeamId,
+    Guid ToolchainAdapterId,
+    Guid? RepositoryId,
+    string SourceRevision,
+    string TargetKey,
+    string Configuration,
+    string IdempotencyKey);
+
+public sealed record ReadBuildRequest(Guid? BuildId = null, Guid? WorkstreamId = null);
+
+public sealed record BuildValidationReport(
+    string TypeKey,
+    string Status,
+    string Summary,
+    IReadOnlyList<ReviewFinding> Findings,
+    IReadOnlyList<EvidenceReference> Evidence);
+
+public sealed record ReportBuildRequest(
+    Guid BuildId,
+    long ExpectedRevision,
+    string Status,
+    IReadOnlyList<EvidenceReference> OutputAssets,
+    JsonElement Provenance,
+    IReadOnlyList<BuildValidationReport> Validations,
+    string IdempotencyKey);
+
+public sealed record DeliveryBuild(
+    Guid Id,
+    Guid WorkstreamId,
+    Guid? TeamId,
+    Guid ToolchainAdapterId,
+    Guid? RepositoryId,
+    string SourceRevision,
+    string TargetKey,
+    string Configuration,
+    string Status,
+    IReadOnlyList<EvidenceReference> OutputAssets,
+    JsonElement Provenance,
+    long Revision,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+public sealed record ReadValidationRequest(Guid? ValidationId = null, Guid? BuildId = null, Guid? WorkstreamId = null);
+
+public sealed record DeliveryValidation(
+    Guid Id,
+    Guid WorkstreamId,
+    Guid BuildId,
+    string TypeKey,
+    string Status,
+    string Summary,
+    IReadOnlyList<ReviewFinding> Findings,
+    IReadOnlyList<EvidenceReference> Evidence,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? CompletedAt);
+
+public sealed record CreatePreviewRequest(Guid WorkstreamId, Guid BuildId, TimeSpan Lifetime, string IdempotencyKey);
+public sealed record ReadPreviewRequest(Guid? PreviewId = null, Guid? WorkstreamId = null);
+
+public sealed record DeliveryPreview(
+    Guid Id,
+    Guid WorkstreamId,
+    Guid BuildId,
+    string Status,
+    string? AccessReference,
+    DateTimeOffset ExpiresAt,
+    DateTimeOffset CreatedAt);
+
+public sealed record PlanEvaluationSessionRequest(
+    Guid WorkstreamId,
+    Guid? BuildId,
+    string TypeKey,
+    JsonElement Plan,
+    string ConsentPolicyKey,
+    string IdempotencyKey);
+
+public sealed record ReadEvaluationSessionRequest(Guid? EvaluationSessionId = null, Guid? WorkstreamId = null);
+
+public sealed record ReportEvaluationSessionRequest(
+    Guid EvaluationSessionId,
+    long ExpectedRevision,
+    JsonElement Report,
+    IReadOnlyList<EvidenceReference> Evidence,
+    string IdempotencyKey);
+
+public sealed record EvaluationSession(
+    Guid Id,
+    Guid WorkstreamId,
+    Guid? BuildId,
+    string TypeKey,
+    JsonElement Plan,
+    string ConsentPolicyKey,
+    string Status,
+    JsonElement Report,
+    IReadOnlyList<EvidenceReference> Evidence,
+    long Revision,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+public sealed record ReadReleaseReadinessRequest(Guid? ReleaseReadinessId = null, Guid? WorkstreamId = null);
+
+public sealed record SubmitReleaseReadinessRequest(
+    Guid WorkstreamId,
+    string TypeKey,
+    IReadOnlyList<EvidenceReference> Evidence,
+    IReadOnlyList<ReviewFinding> Findings,
+    string IdempotencyKey);
+
+public sealed record ReleaseReadiness(
+    Guid Id,
+    Guid WorkstreamId,
+    string TypeKey,
+    string Status,
+    IReadOnlyList<EvidenceReference> Evidence,
+    IReadOnlyList<ReviewFinding> Findings,
+    long Revision,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+public sealed record PublicationProposalRequest(
+    Guid WorkstreamId,
+    Guid ReleaseReadinessId,
+    string ProviderKey,
+    string DestinationKey,
+    JsonElement PublicationMetadata,
+    string IdempotencyKey);

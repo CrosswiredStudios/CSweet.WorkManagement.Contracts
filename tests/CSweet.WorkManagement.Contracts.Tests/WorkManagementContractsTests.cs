@@ -224,18 +224,18 @@ public sealed class WorkManagementContractsTests
     }
 
     [Fact]
-    public void PlanningSpecification_CarriesApprovedGameDesignPackageDigest()
+    public void PlanningSpecification_CarriesApprovedArtifactPackageDigest()
     {
-        var document = new DesignPackageDocumentDigest(Guid.NewGuid(), Guid.NewGuid(),
-            "gameplay-systems", new string('a', 64));
-        var digest = new DesignPackageDigest(Guid.NewGuid(), 1, new string('b', 64),
+        var document = new ArtifactPackageMemberDigest(Guid.NewGuid(), Guid.NewGuid(),
+            "example.artifact.v1", new string('a', 64));
+        var digest = new ArtifactPackageDigest(Guid.NewGuid(), 1, new string('b', 64),
             DateTimeOffset.UtcNow, [document]);
         var planning = new WorkItemPlanningSpecification(["Build the prototype."], ["Package is approved."])
         {
-            DesignPackageDigest = digest
+            ArtifactPackageDigest = digest
         };
 
-        Assert.Equal(digest, planning.DesignPackageDigest);
+        Assert.Equal(digest, planning.ArtifactPackageDigest);
     }
 
     [Fact]
