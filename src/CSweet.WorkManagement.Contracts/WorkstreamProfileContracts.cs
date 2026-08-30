@@ -24,19 +24,31 @@ public static class DecisionCapabilityNames
 
 public static class DeliveryEvidenceCapabilityNames
 {
-    public const string ToolchainCatalogReadV1 = "platform.toolchain.catalog.read.v1";
-    public const string BuildRequestV1 = "platform.build.request.v1";
-    public const string BuildReadV1 = "platform.build.read.v1";
-    public const string BuildReportV1 = "platform.build.report.v1";
-    public const string ValidationReadV1 = "platform.validation.read.v1";
-    public const string PreviewCreateV1 = "platform.preview.create.v1";
-    public const string PreviewReadV1 = "platform.preview.read.v1";
+    public const string ToolchainCatalogReadV2 = "platform.toolchain.catalog.read.v2";
+    public const string BuildRequestV2 = "platform.build.request.v2";
+    public const string BuildReadV2 = "platform.build.read.v2";
+    public const string BuildClaimV1 = "platform.build.claim.v1";
+    public const string BuildHeartbeatV1 = "platform.build.heartbeat.v1";
+    public const string BuildReportV2 = "platform.build.report.v2";
+    public const string BuildCancelV1 = "platform.build.cancel.v1";
+    public const string ValidationReadV2 = "platform.validation.read.v2";
+    public const string PreviewCreateV2 = "platform.preview.create.v2";
+    public const string PreviewReadV2 = "platform.preview.read.v2";
     public const string EvaluationPlanV1 = "platform.evaluation-session.plan.v1";
     public const string EvaluationReadV1 = "platform.evaluation-session.read.v1";
     public const string EvaluationReportV1 = "platform.evaluation-session.report.v1";
     public const string ReleaseReadinessReadV1 = "platform.release-readiness.read.v1";
     public const string ReleaseReadinessSubmitV1 = "platform.release-readiness.submit.v1";
     public const string PublicationProposeV1 = "platform.publication.propose.v1";
+}
+
+public static class MediaCapabilityNames
+{
+    public const string ProviderCatalogReadV1 = "platform.media-provider.catalog.read.v1";
+    public const string JobRequestV1 = "platform.media-job.request.v1";
+    public const string JobReadV1 = "platform.media-job.read.v1";
+    public const string JobCancelV1 = "platform.media-job.cancel.v1";
+    public const string AssetReferenceV1 = "platform.media-asset.reference.v1";
 }
 
 /// <summary>Generic event names. Domain meaning is carried by profile and type keys.</summary>
@@ -169,7 +181,18 @@ public sealed record WorkstreamDetail(
     int? ProfileVersion,
     JsonElement? ProfileData,
     string? ProfileDefinitionDigest,
-    long Revision);
+    long Revision,
+    IReadOnlyList<WorkstreamStaffingRequirement>? StaffingRequirements = null);
+
+/// <summary>
+/// A profile-declared staffing slot after Core has evaluated any bounded metadata predicate.
+/// Core interprets only the generic predicate language and does not know the domain role key.
+/// </summary>
+public sealed record WorkstreamStaffingRequirement(
+    string RoleKey,
+    bool IsConditional,
+    bool IsActive,
+    string? BlockingDecisionTypeKey);
 
 public sealed record WorkstreamChangeProposalRequest(
     Guid WorkstreamId,
@@ -275,7 +298,8 @@ public sealed record DecisionRequest(
     DateTimeOffset? DueAt,
     string BlockingImpact,
     Guid? SupersedesDecisionId,
-    string IdempotencyKey);
+    string IdempotencyKey,
+    JsonElement? TypeData = null);
 
 public sealed record ReadDecisionRequest(Guid? DecisionId = null, Guid? WorkstreamId = null, bool PendingOnly = false);
 
@@ -303,7 +327,8 @@ public sealed record DecisionRecord(
     DateTimeOffset? DueAt,
     long Revision,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    JsonElement? TypeData = null);
 
 public static class ReviewFindingSeverities
 {
