@@ -93,18 +93,48 @@ public sealed record ConfigureSoftwareOrchestrationTemplateRequest(
     int MaximumQualityCycles,
     string IdempotencyKey);
 
+/// <summary>Applies the immutable workflow contributed by a pinned workstream profile.</summary>
+public sealed record ConfigureProfileOrchestrationRequest(
+    Guid WorkstreamId,
+    Guid BoardId,
+    long ExpectedBoardRevision,
+    string ProfileDefinitionDigest,
+    string IdempotencyKey);
+
+public sealed record ConfigureProfileOrchestrationResponse(
+    Guid WorkstreamId,
+    Guid BoardId,
+    long BoardRevision,
+    WorkOrchestrationPolicyRevision Policy,
+    IReadOnlyList<WorkBoardColumn> Columns);
+
 public sealed record WorkStageAssignment(
     string StageKey,
     string PrincipalKind,
     Guid? OrganizationUserId = null,
     Guid? AgentInstallationId = null,
-    string? PlatformAction = null);
+    string? PlatformAction = null)
+{
+    public WorkAssignmentRequirements? Requirements { get; init; }
+    public WorkAssignmentSelectionEvidence? SelectionEvidence { get; init; }
+}
 
 public sealed record WorkExecutionEvidence(
     string Kind,
     string Name,
     string Value,
     string? ContentType = null);
+
+/// <summary>Canonical, domain-neutral planning input supplied to an assigned worker.</summary>
+public sealed record WorkExecutionInputV1(
+    Guid? WorkstreamId,
+    Guid? TeamId,
+    long PlanningRevision,
+    WorkItemPlanningSpecification? Planning)
+{
+    public WorkAssignmentRequirements? AssignmentRequirements { get; init; }
+    public WorkAssignmentSelectionEvidence? AssignmentSelection { get; init; }
+}
 
 public sealed record WorkExecutionAssignmentV1(
     Guid SprintExecutionId,

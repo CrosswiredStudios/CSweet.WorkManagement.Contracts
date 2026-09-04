@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace CSweet.WorkManagement.Contracts;
 
 /// <summary>Canonical capability names for the agent-facing work-management protocol.</summary>
@@ -16,6 +19,8 @@ public static class WorkManagementCapabilityNames
     public const string BoardConfigure = "work.board.configure";
     public const string BoardConfigureColumns = "work.board.columns.configure";
     public const string OrchestrationConfigureSoftwareTemplate = "work.orchestration.software-template.configure";
+    public const string OrchestrationConfigureProfileV1 = "work.orchestration.profile.configure.v1";
+    public const string FlowMetricsReadV1 = "work.flow-metrics.read.v1";
     public const string ItemRead = "work.item.read";
     public const string ItemCreate = "work.item.create";
     public const string ItemTypesReadV1 = "work.item.types.read.v1";
@@ -66,7 +71,8 @@ public static class WorkManagementCapabilityNames
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
         OrchestrationResume, OrchestrationCancel, OrchestrationRetry,
-        OrchestrationConfigureSoftwareTemplate, ExecutionRunV1,
+        OrchestrationConfigureSoftwareTemplate, OrchestrationConfigureProfileV1,
+        FlowMetricsReadV1, ExecutionRunV1,
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
         PersonalTodoActivate,
         PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,
@@ -82,6 +88,18 @@ public static class WorkItemKinds
     public const string Story = "Story";
     public const string Task = "Task";
     public const string Bug = "Bug";
+}
+
+public static class WorkItemExecutionModes
+{
+    public const string Container = "Container";
+    public const string Executable = "Executable";
+
+    public static IReadOnlySet<string> All { get; } = new HashSet<string>(
+        [Container, Executable], StringComparer.Ordinal);
+
+    public static string DefaultForKind(string kind) =>
+        kind is WorkItemKinds.Initiative or WorkItemKinds.Epic ? Container : Executable;
 }
 
 /// <summary>Platform-owned board profiles. A profile becomes immutable after the first item.</summary>
@@ -143,7 +161,10 @@ public sealed record WorkItemTypeDefinition(
     IReadOnlyList<string> CompatibleBoardProfiles,
     IReadOnlyList<string> PermittedParentTypeKeys,
     string ProviderKey,
-    IReadOnlyList<string> RequiredApprovalPolicyKeys);
+    IReadOnlyList<string> RequiredApprovalPolicyKeys)
+{
+    public string ExecutionMode { get; init; } = WorkItemExecutionModes.DefaultForKind(Kind);
+}
 
 public sealed record WorkItemTypeCatalog(
     long Revision,
@@ -365,6 +386,18 @@ public sealed record PersonalTodoWaitState(
     string Reason,
     Guid? WaitingOnOrganizationUserId = null);
 
+/// <summary>Optional authoritative source links for a personal management commitment.</summary>
+public sealed record PersonalTodoWorkContext(
+    Guid? WorkstreamId = null,
+    Guid? TeamId = null,
+    Guid? BoardId = null,
+    Guid? WorkItemId = null,
+    Guid? SprintId = null,
+    Guid? GateId = null,
+    Guid? DecisionId = null,
+    Guid? CoordinationSessionId = null,
+    string? SourceFingerprint = null);
+
 public sealed record PersonalTodoItem(
     Guid Id,
     Guid BoardId,
@@ -390,6 +423,7 @@ public sealed record PersonalTodoItem(
     public IReadOnlyList<WorkItemMentionSpan> MentionSpans { get; init; } = [];
     public string? CorrelationId { get; init; }
     public PersonalTodoWaitState? Wait { get; init; }
+    public PersonalTodoWorkContext? WorkContext { get; init; }
 }
 
 public sealed record PersonalTodoDirectory(
@@ -410,6 +444,7 @@ public sealed record AddPersonalTodoItemRequest(
     IReadOnlyList<WorkItemMentionInput>? Mentions = null)
 {
     public bool StartInBacklog { get; init; }
+    public PersonalTodoWorkContext? WorkContext { get; init; }
 }
 
 public sealed record ActivatePersonalTodoItemRequest(
@@ -425,7 +460,10 @@ public sealed record UpdatePersonalTodoItemRequest(
     DateTimeOffset? DueDate,
     long ExpectedRevision,
     string IdempotencyKey,
-    IReadOnlyList<WorkItemMentionInput>? Mentions = null);
+    IReadOnlyList<WorkItemMentionInput>? Mentions = null)
+{
+    public PersonalTodoWorkContext? WorkContext { get; init; }
+}
 
 public sealed record ArchivePersonalTodoItemRequest(
     Guid ItemId,
@@ -604,6 +642,17 @@ public sealed record ArtifactPackageMemberDigest(
     Guid AcceptedRevisionId,
     string TypeKey,
     string Sha256);
+
+public static class ArtifactPackageDigestCalculator
+{
+    public static string Calculate(Guid packageId, int version, IEnumerable<ArtifactPackageMemberDigest> members)
+    {
+        var canonical = string.Join("\n", members.OrderBy(x => x.ArtifactId).ThenBy(x => x.AcceptedRevisionId)
+            .Select(x => $"{x.ArtifactId:D}|{x.AcceptedRevisionId:D}|{x.TypeKey}|{x.Sha256.ToLowerInvariant()}"));
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+            $"{packageId:D}|{version}\n{canonical}"))).ToLowerInvariant();
+    }
+}
 /// <summary>
 /// Technical eligibility and sequencing advice supplied by an architecture authority. This is not
 /// an assignment: principal and installation identifiers are deliberately excluded.
@@ -614,7 +663,33 @@ public sealed record WorkTechnicalDelegationRecommendation(
     IReadOnlyList<string> RequiredCapabilityKeys,
     string? ParallelizationGroup,
     bool SpecialistRequired,
-    string Rationale);
+    string Rationale)
+{
+    public IReadOnlyList<string> RequiredSpecializationKeys { get; init; } = [];
+    public IReadOnlyList<string> PreferredSpecializationKeys { get; init; } = [];
+}
+
+public sealed record WorkAssignmentRequirements(
+    string RequiredRoleKey,
+    IReadOnlyList<string> RequiredSpecializationKeys,
+    IReadOnlyList<string> PreferredSpecializationKeys,
+    IReadOnlyList<string> RequiredCapabilityKeys);
+
+public sealed record WorkAssignmentSelectionEvidence(
+    Guid AgentInstallationId,
+    long TeamRosterRevision,
+    string ProfileDefinitionDigest,
+    IReadOnlyList<string> MatchedSpecializationKeys,
+    string DecisionFingerprint,
+    DateTimeOffset SelectedAt);
+
+public sealed record WorkEstimateProvenance(
+    Guid SourceOrganizationUserId,
+    Guid? SourceAgentInstallationId,
+    Guid CoordinationSessionId,
+    long CoordinationTurnRevision,
+    string SourceDigest,
+    decimal Confidence);
 public sealed record WorkItem(
     Guid Id, Guid ColumnId, Guid? ParentItemId, Guid? SprintId, string Kind,
     string Title, string Description, string Status, string Priority,
@@ -626,6 +701,7 @@ public sealed record WorkItem(
     SoftwareDevelopmentBrief? Development = null)
 {
     public string TypeKey { get; init; } = string.Empty;
+    public string ExecutionMode { get; init; } = WorkItemExecutionModes.Executable;
     public long PlanningRevision { get; init; }
     public WorkItemPlanningSpecification? Planning { get; init; }
     public SoftwareQualityBrief? Quality { get; init; }
@@ -636,6 +712,7 @@ public sealed record WorkItem(
     public IReadOnlyList<WorkItemMentionSpan> Mentions { get; init; } = [];
     public IReadOnlyList<WorkItemApproval> Approvals { get; init; } = [];
     public WorkItemProposalProvenance? ProposalProvenance { get; init; }
+    public WorkEstimateProvenance? EstimateProvenance { get; init; }
 }
 public sealed record WorkBoardDetail(
     WorkBoardSummary Board, IReadOnlyList<WorkBoardColumn> Columns, IReadOnlyList<WorkItem> Items);
@@ -747,7 +824,10 @@ public sealed record WorkItemCommentPage(
     long SourceRevision);
 public sealed record EstimateWorkItemRequest(
     Guid BoardId, Guid ItemId, decimal? EstimatePoints,
-    long ExpectedItemRevision, string IdempotencyKey);
+    long ExpectedItemRevision, string IdempotencyKey)
+{
+    public WorkEstimateProvenance? Provenance { get; init; }
+}
 public sealed record MoveWorkItemRequest(
     Guid BoardId, Guid ItemId, Guid TargetColumnId,
     long ExpectedRevision, string IdempotencyKey);

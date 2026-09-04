@@ -133,6 +133,10 @@ public sealed class WorkManagementContractsTests
         Assert.Contains(WorkManagementCapabilityNames.BoardConfigureColumns, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.OrchestrationConfigureSoftwareTemplate,
             WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.OrchestrationConfigureProfileV1,
+            WorkManagementCapabilityNames.All);
+        Assert.Contains(WorkManagementCapabilityNames.FlowMetricsReadV1,
+            WorkManagementCapabilityNames.All);
         Assert.DoesNotContain(WorkManagementCapabilityNames.SprintStart, WorkManagementCapabilityNames.All);
         Assert.DoesNotContain(WorkManagementCapabilityNames.AutomationManage, WorkManagementCapabilityNames.All);
         Assert.Contains(WorkManagementCapabilityNames.PersonalTodoAdd, WorkManagementCapabilityNames.All);
@@ -202,6 +206,40 @@ public sealed class WorkManagementContractsTests
     }
 
     [Fact]
+    public void FlowMetrics_ExcludeIndividualPointVelocity()
+    {
+        var properties = typeof(WorkFlowPrincipalMetrics).GetProperties()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.DoesNotContain("Velocity", properties);
+        Assert.Contains("ThroughputPerWeek", properties);
+        Assert.Contains("P85CycleTimeHours", properties);
+    }
+
+    [Fact]
+    public void ProfileTemplates_AreGenericAndResolveColumnsByOpaqueKey()
+    {
+        var stage = new WorkOrchestrationProfileStageTemplate(
+            "delivery", "Delivery", WorkOrchestrationStageTypes.AgentExecution, "active",
+            "Complete the assigned work.", "{}", "{}", 900, 1,
+            new WorkOrchestrationRetryPolicy());
+        var profile = new WorkstreamProfileDefinition(
+            "example.profile.v1", 1, "Example", "{}", "example.lifecycle", "example.board",
+            null, WorkstreamProfileStatuses.Active, "example.package", "1.0.0", new string('a', 64))
+        {
+            BoardWorkflow = new WorkBoardWorkflowTemplate(
+                [new("active", "Active", "Active", "Limited", 4)]),
+            Orchestration = new WorkOrchestrationProfileTemplate(
+                "Example", "delivery", WorkMergeModes.ManagerApproval,
+                new WorkOrchestrationConcurrencyLimits(8, 4, 4, 2, 1), [stage], [])
+        };
+
+        Assert.Equal("active", Assert.Single(profile.Orchestration!.Stages).ColumnKey);
+        Assert.Equal("example.profile.v1", profile.Key);
+    }
+
+    [Fact]
     public void TechnicalDelegation_IsAdviceWithoutPrincipalIdentity()
     {
         var recommendation = new WorkTechnicalDelegationRecommendation(
@@ -221,6 +259,56 @@ public sealed class WorkManagementContractsTests
             ArchitectureArtifactDigest = digest
         };
         Assert.Equal(digest, planning.ArchitectureArtifactDigest);
+    }
+
+    [Fact]
+    public void AssignmentContracts_SeparateRoleEligibilityFromSkillPreference()
+    {
+        var requirements = new WorkAssignmentRequirements(
+            "specialist", ["required-skill"], ["preferred-skill"], [WorkManagementCapabilityNames.ExecutionRunV1]);
+        var selection = new WorkAssignmentSelectionEvidence(
+            Guid.NewGuid(), 4, new string('a', 64), ["required-skill", "preferred-skill"],
+            new string('b', 64), DateTimeOffset.UtcNow);
+        var assignment = new WorkStageAssignment(
+            "delivery", WorkOrchestrationPrincipalKinds.AgentInstallation,
+            AgentInstallationId: selection.AgentInstallationId)
+        {
+            Requirements = requirements,
+            SelectionEvidence = selection
+        };
+
+        Assert.Equal("specialist", assignment.Requirements!.RequiredRoleKey);
+        Assert.Equal(selection.AgentInstallationId, assignment.SelectionEvidence!.AgentInstallationId);
+    }
+
+    [Fact]
+    public void WorkTypes_CanDeclareContainersIndependentlyOfHierarchyKind()
+    {
+        var story = new WorkItemTypeDefinition(
+            "example.story.v1", "Example", WorkItemKinds.Story, ["example.board"], [], "example", [])
+        {
+            ExecutionMode = WorkItemExecutionModes.Container
+        };
+
+        Assert.Equal(WorkItemExecutionModes.Container, story.ExecutionMode);
+        Assert.Equal(WorkItemExecutionModes.Executable, WorkItemExecutionModes.DefaultForKind(WorkItemKinds.Task));
+    }
+
+    [Fact]
+    public void PersonalCommitments_CarryAuthoritativeWorkContext()
+    {
+        var workstreamId = Guid.NewGuid();
+        var boardId = Guid.NewGuid();
+        var context = new PersonalTodoWorkContext(WorkstreamId: workstreamId, BoardId: boardId,
+            SourceFingerprint: new string('c', 64));
+        var request = new AddPersonalTodoItemRequest(
+            "Reconcile planning", null, WorkPriorities.High, null, "planning-1")
+        {
+            WorkContext = context
+        };
+
+        Assert.Equal(workstreamId, request.WorkContext!.WorkstreamId);
+        Assert.Equal(boardId, request.WorkContext.BoardId);
     }
 
     [Fact]

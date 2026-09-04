@@ -96,7 +96,77 @@ public sealed record WorkstreamProfileDefinition(
     string Status,
     string ProviderPackageId,
     string ProviderPackageVersion,
-    string DefinitionDigest);
+    string DefinitionDigest)
+{
+    public WorkBoardWorkflowTemplate? BoardWorkflow { get; init; }
+    public WorkOrchestrationProfileTemplate? Orchestration { get; init; }
+    public WorkAssignmentPolicyTemplate? AssignmentPolicy { get; init; }
+}
+
+/// <summary>A profile-contributed, domain-neutral board workflow.</summary>
+public sealed record WorkBoardWorkflowTemplate(
+    IReadOnlyList<WorkBoardWorkflowColumnTemplate> Columns);
+
+public sealed record WorkBoardWorkflowColumnTemplate(
+    string Key,
+    string Name,
+    string Category,
+    string WipPolicy,
+    int? WipLimit = null);
+
+/// <summary>A profile-contributed orchestration graph with opaque domain keys.</summary>
+public sealed record WorkOrchestrationProfileTemplate(
+    string Name,
+    string InitialStageKey,
+    string MergeMode,
+    WorkOrchestrationConcurrencyLimits Concurrency,
+    IReadOnlyList<WorkOrchestrationProfileStageTemplate> Stages,
+    IReadOnlyList<WorkOrchestrationTransitionDefinition> Transitions);
+
+public sealed record WorkOrchestrationProfileStageTemplate(
+    string Key,
+    string Name,
+    string StageType,
+    string? ColumnKey,
+    string Instructions,
+    string InputSchemaJson,
+    string OutputSchemaJson,
+    int TimeoutSeconds,
+    int? ConcurrencyLimit,
+    WorkOrchestrationRetryPolicy RetryPolicy,
+    string? PlatformAction = null,
+    bool IsSuccessfulTerminal = false);
+
+/// <summary>
+/// Profile-contributed assignment guardrails. Role, specialization, capability, lifecycle, and
+/// work-type keys are opaque to Core; only their generic relationships are interpreted.
+/// </summary>
+public sealed record WorkAssignmentPolicyTemplate(
+    bool ExactRoleRequired,
+    string SkillMatchMode,
+    IReadOnlyList<WorkRoleAssignmentTemplate> Roles,
+    IReadOnlyList<WorkPlanningQuorumTemplate> PlanningQuorums);
+
+public sealed record WorkRoleAssignmentTemplate(
+    string RoleKey,
+    IReadOnlyList<string> EligibleWorkItemTypeKeys,
+    IReadOnlyList<string> DefaultRelevantSpecializationKeys,
+    IReadOnlyList<string> RequiredCapabilityKeys);
+
+public sealed record WorkPlanningQuorumTemplate(
+    string Key,
+    IReadOnlyList<string> LifecycleStageKeys,
+    IReadOnlyList<string> RequiredRoleKeys,
+    bool IncludeAssignedRoles = false);
+
+public static class WorkSkillMatchModes
+{
+    public const string RequiredThenPreferred = "RequiredThenPreferred";
+    public const string PreferredOnly = "PreferredOnly";
+
+    public static IReadOnlySet<string> All { get; } = new HashSet<string>(
+        [RequiredThenPreferred, PreferredOnly], StringComparer.Ordinal);
+}
 
 public sealed record WorkstreamProfileReference(string Key, int Version, string DefinitionDigest);
 
@@ -182,7 +252,11 @@ public sealed record WorkstreamDetail(
     JsonElement? ProfileData,
     string? ProfileDefinitionDigest,
     long Revision,
-    IReadOnlyList<WorkstreamStaffingRequirement>? StaffingRequirements = null);
+    IReadOnlyList<WorkstreamStaffingRequirement>? StaffingRequirements = null)
+{
+    /// <summary>The assignment policy from the exact pinned profile revision.</summary>
+    public WorkAssignmentPolicyTemplate? AssignmentPolicy { get; init; }
+}
 
 /// <summary>
 /// A profile-declared staffing slot after Core has evaluated any bounded metadata predicate.
