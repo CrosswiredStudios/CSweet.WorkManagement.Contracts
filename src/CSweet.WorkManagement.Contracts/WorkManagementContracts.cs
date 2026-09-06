@@ -740,6 +740,9 @@ public sealed record ReviseWorkItemPlanningRequest(
     string IdempotencyKey)
 {
     public WorkItemProposalProvenance? ProposalProvenance { get; init; }
+    /// <summary>Null preserves assignments; an explicit list replaces them after eligibility validation.</summary>
+    public IReadOnlyList<WorkStageAssignment>? StageAssignments { get; init; }
+    public Guid? AccountableOrganizationUserId { get; init; }
 }
 public sealed record DecideWorkItemApprovalRequest(
     Guid BoardId,

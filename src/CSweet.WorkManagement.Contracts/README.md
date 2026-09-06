@@ -18,3 +18,5 @@ agent runtime assemblies.
 Version 3.5 includes durable in-progress waiting for personal work. Version 3.4 added sequenced
 Backlog activation, while version 3.3 introduced personal queues and structured, field-scoped
 work-item mention spans in the shared agent/platform protocol.
+
+Version 3.16.0 adds optional validated assignment replacement to planning revisions, allowing existing backlog tickets to acquire an owner as staffing arrives. Omitted assignment data preserves existing ownership.
