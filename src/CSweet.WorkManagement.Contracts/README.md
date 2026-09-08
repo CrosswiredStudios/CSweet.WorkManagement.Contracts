@@ -20,3 +20,9 @@ Backlog activation, while version 3.3 introduced personal queues and structured,
 work-item mention spans in the shared agent/platform protocol.
 
 Version 3.16.0 adds optional validated assignment replacement to planning revisions, allowing existing backlog tickets to acquire an owner as staffing arrives. Omitted assignment data preserves existing ownership.
+
+Version 3.17.0 adds AllowedOutcomeCodes to canonical execution input, so agents can select outcomes supported by their immutable stage policy. Older payloads deserialize with an empty list.
+
+Version 3.18.0 adds the canonical orchestration approval decision capability for authorized agent board managers.
+
+Version 3.19.0 adds optional LatestOutcome to orchestration stage reads for delivery review. Older responses omit it.

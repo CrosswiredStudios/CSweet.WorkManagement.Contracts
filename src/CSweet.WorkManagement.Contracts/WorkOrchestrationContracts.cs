@@ -132,6 +132,8 @@ public sealed record WorkExecutionInputV1(
     long PlanningRevision,
     WorkItemPlanningSpecification? Planning)
 {
+    /// <summary>Outcome codes accepted by the immutable execution policy for this stage.</summary>
+    public IReadOnlyList<string> AllowedOutcomeCodes { get; init; } = [];
     public WorkAssignmentRequirements? AssignmentRequirements { get; init; }
     public WorkAssignmentSelectionEvidence? AssignmentSelection { get; init; }
 }
@@ -231,6 +233,8 @@ public sealed record WorkStageExecutionResponse(
 {
     public long AssignmentRevision { get; init; }
     public int MaximumAttempts { get; init; }
+    /// <summary>Validated result of this completed stage's latest attempt, if available.</summary>
+    public WorkExecutionOutcomeV1? LatestOutcome { get; init; }
 }
 
 public sealed record WorkItemExecutionResponse(

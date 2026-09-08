@@ -13,6 +13,7 @@ public static class WorkManagementCapabilityNames
     public const string OrchestrationPause = "work.orchestration.pause";
     public const string OrchestrationResume = "work.orchestration.resume";
     public const string OrchestrationCancel = "work.orchestration.cancel";
+    public const string OrchestrationDecideApproval = "work.orchestration.approval.decide";
     public const string OrchestrationRetry = "work.orchestration.retry";
     public const string BoardRead = "work.board.read";
     public const string BoardCreate = "work.board.create";
@@ -70,7 +71,7 @@ public static class WorkManagementCapabilityNames
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
-        OrchestrationResume, OrchestrationCancel, OrchestrationRetry,
+        OrchestrationResume, OrchestrationCancel, OrchestrationRetry, OrchestrationDecideApproval,
         OrchestrationConfigureSoftwareTemplate, OrchestrationConfigureProfileV1,
         FlowMetricsReadV1, ExecutionRunV1,
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
