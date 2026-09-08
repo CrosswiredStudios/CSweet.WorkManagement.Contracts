@@ -25,4 +25,4 @@ Version 3.17.0 adds AllowedOutcomeCodes to canonical execution input, so agents 
 
 Version 3.18.0 adds the canonical orchestration approval decision capability for authorized agent board managers.
 
-Version 3.19.0 adds optional LatestOutcome to orchestration stage reads for delivery review. Older responses omit it.
+Version 3.20.0 adds optional LatestOutcome to orchestration stage reads for delivery review. Older responses omit it.
