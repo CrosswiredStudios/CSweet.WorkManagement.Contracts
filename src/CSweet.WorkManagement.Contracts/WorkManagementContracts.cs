@@ -62,6 +62,7 @@ public static class WorkManagementCapabilityNames
     public const string PersonalTodoUpdate = "work.personal-todo.update.v1";
     public const string PersonalTodoArchive = "work.personal-todo.archive.v1";
     public const string PersonalTodoRestore = "work.personal-todo.restore.v1";
+    public const string PersonalTodoCancel = "work.personal-todo.cancel.v1";
 
     public static IReadOnlySet<string> All { get; } = new HashSet<string>(
     [
@@ -78,7 +79,7 @@ public static class WorkManagementCapabilityNames
         PersonalTodoActivate,
         PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,
         PersonalTodoDefer,
-        PersonalTodoUpdate, PersonalTodoArchive, PersonalTodoRestore
+        PersonalTodoUpdate, PersonalTodoArchive, PersonalTodoRestore, PersonalTodoCancel
     ], StringComparer.Ordinal);
 }
 
@@ -366,6 +367,7 @@ public static class PersonalTodoStatuses
     public const string Running = "Running";
     public const string Completed = "Completed";
     public const string Blocked = "Blocked";
+    public const string Cancelled = "Cancelled";
 }
 
 public sealed record PersonalTodoBoard(
