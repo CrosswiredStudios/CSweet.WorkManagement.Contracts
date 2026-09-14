@@ -423,6 +423,11 @@ public sealed record PersonalTodoItem(
 {
     public IReadOnlyList<WorkItemMentionSpan> MentionSpans { get; init; } = [];
     public string? CorrelationId { get; init; }
+    public string Kind { get; init; } = "Task";
+    public Guid? ParentItemId { get; init; }
+    public Guid? PlanRootId { get; init; }
+    public string? PlanExecution { get; init; }
+    public IReadOnlyList<string> AcceptanceCriteria { get; init; } = [];
     public PersonalTodoWaitState? Wait { get; init; }
     public PersonalTodoWorkContext? WorkContext { get; init; }
 }
@@ -624,6 +629,7 @@ public sealed record WorkItemPlanningSpecification(
     IReadOnlyList<string>? Constraints = null)
 {
     public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
+    public PersonalWorkPlanLink? PersonalPlan { get; init; }
     public IReadOnlyList<WorkTechnicalDelegationRecommendation> DelegationRecommendations { get; init; } = [];
     /// <summary>Digest of the exact approved coordination design that governs this planned item.</summary>
     public string? ArchitectureArtifactDigest { get; init; }
