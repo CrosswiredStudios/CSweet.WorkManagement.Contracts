@@ -30,6 +30,8 @@ public static class WorkManagementCapabilityNames
     public const string ItemFinalizeDelivery = "work.item.delivery.finalize";
     public const string ItemComment = "work.item.comment";
     public const string ItemCommentsRead = "work.item.comments.read";
+    public const string ItemCommentUpdateV1 = "work.item.comment.update.v1";
+    public const string ItemCommentDeleteV1 = "work.item.comment.delete.v1";
     public const string ItemEstimate = "work.item.estimate";
     public const string ItemStart = "work.item.start";
     public const string ItemMove = "work.item.move";
@@ -68,7 +70,8 @@ public static class WorkManagementCapabilityNames
     [
         BoardRead, BoardCreate, BoardConfigure, BoardConfigureColumns,
         ItemRead, ItemCreate, ItemTypesReadV1, ItemPlanningReviseV1, ItemApprovalDecideV1,
-        ItemFinalizeDelivery, ItemComment, ItemCommentsRead, ItemEstimate, ItemMove, ItemTransfer,
+        ItemFinalizeDelivery, ItemComment, ItemCommentsRead, ItemCommentUpdateV1, ItemCommentDeleteV1,
+        ItemEstimate, ItemMove, ItemTransfer,
         SprintRead, SprintCreate,
         SprintManageScope, SprintManageCapacity, SprintCarryOver, SprintReadReports,
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
@@ -812,6 +815,24 @@ public sealed record CommentOnWorkItemRequest(
     public string? CausationId { get; init; }
     public string? ArtifactDigest { get; init; }
 }
+/// <summary>
+/// Replaces the body of one existing comment. The platform only permits the comment author to
+/// update it, and rejects the write when <see cref="ExpectedRevision"/> is stale.
+/// </summary>
+public sealed record UpdateWorkItemCommentRequest(
+    Guid BoardId, Guid ItemId, Guid CommentId, string Body, long ExpectedRevision, string IdempotencyKey);
+/// <summary>
+/// Soft-deletes one existing comment. The platform only permits the comment author to delete it,
+/// and rejects the write when <see cref="ExpectedRevision"/> is stale.
+/// </summary>
+public sealed record DeleteWorkItemCommentRequest(
+    Guid BoardId, Guid ItemId, Guid CommentId, long ExpectedRevision, string IdempotencyKey);
+/// <summary>
+/// Confirms a soft-deleted comment. The comment row is retained for audit and activity history, so
+/// the result reports the tombstone details rather than the removed body.
+/// </summary>
+public sealed record DeleteWorkItemCommentResult(
+    Guid CommentId, Guid WorkItemId, long Revision, DateTimeOffset DeletedAt);
 public sealed record WorkItemComment(
     Guid Id, Guid WorkItemId, string AuthorKind, Guid AuthorSubjectId,
     string AuthorDisplayName, string Body, long Revision,
@@ -821,6 +842,8 @@ public sealed record WorkItemComment(
     public Guid? CoordinationSessionId { get; init; }
     public string? CausationId { get; init; }
     public string? ArtifactDigest { get; init; }
+    public bool CanEdit { get; init; }
+    public bool CanDelete { get; init; }
 }
 public sealed record ReadWorkItemCommentsRequest(
     Guid BoardId,
