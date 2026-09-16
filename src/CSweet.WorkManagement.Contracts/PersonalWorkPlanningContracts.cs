@@ -8,7 +8,11 @@ public sealed record PersonalWorkPlanTask(string Key, string Title, string Descr
     IReadOnlyList<string> AcceptanceCriteria, string Execution = "Implementation");
 
 public sealed record CreatePersonalWorkPlanRequest(Guid RootItemId, string EpicTitle,
-    IReadOnlyList<PersonalWorkPlanStory> Stories, string IdempotencyKey);
+    IReadOnlyList<PersonalWorkPlanStory> Stories, string IdempotencyKey)
+{
+    /// <summary>Fences planning performed before an executable personal item is claimed.</summary>
+    public long? ExpectedRevision { get; init; }
+}
 
 public sealed record PersonalWorkPlan(Guid RootItemId, long RootRevision, IReadOnlyList<PersonalTodoItem> Items);
 

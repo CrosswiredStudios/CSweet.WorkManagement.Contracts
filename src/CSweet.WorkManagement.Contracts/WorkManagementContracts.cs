@@ -426,6 +426,7 @@ public sealed record PersonalTodoItem(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? ArchivedAt = null)
 {
+    public bool IsExecutable { get; init; } = true;
     public IReadOnlyList<WorkItemMentionSpan> MentionSpans { get; init; } = [];
     public string? CorrelationId { get; init; }
     public string Kind { get; init; } = "Task";
@@ -507,7 +508,13 @@ public sealed record RequeuePersonalTodoItemRequest(
 
 public sealed record ClaimPersonalTodoItemRequest(
     Guid EventId,
-    string IdempotencyKey);
+    string IdempotencyKey)
+{
+    /// <summary>Optional exact Ready item selected after an agent-owned pre-claim review.</summary>
+    public Guid? ItemId { get; init; }
+    /// <summary>Required with <see cref="ItemId"/> to fence a stale pre-claim decision.</summary>
+    public long? ExpectedRevision { get; init; }
+}
 
 public sealed record PersonalTodoClaim(
     PersonalTodoItem? Item);
