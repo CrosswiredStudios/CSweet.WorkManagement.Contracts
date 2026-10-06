@@ -268,7 +268,10 @@ public sealed record CompleteManualWorkStageRequest(
     string OutcomeCode,
     string Summary,
     JsonElement Output,
-    string IdempotencyKey);
+    string IdempotencyKey)
+{
+    public IReadOnlyList<WorkExecutionEvidence> Evidence { get; init; } = [];
+}
 
 public sealed record DecideWorkApprovalStageRequest(
     Guid BoardId,

@@ -124,6 +124,7 @@ public sealed record JuniorReadyTask(
     IReadOnlyList<string> VerificationEvidence,
     string DefinitionOfDone)
 {
+    public string DeliveryKind { get; init; } = "Code";
     public IReadOnlyList<WorkTechnicalDelegationRecommendation> DelegationRecommendations { get; init; } = [];
 }
 

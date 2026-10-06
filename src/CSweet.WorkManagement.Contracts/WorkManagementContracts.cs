@@ -6,6 +6,7 @@ namespace CSweet.WorkManagement.Contracts;
 /// <summary>Canonical capability names for the agent-facing work-management protocol.</summary>
 public static class WorkManagementCapabilityNames
 {
+    public const string ExecutionRunV2 = "work.execution.run.v2";
     public const string ExecutionRunV1 = "work.execution.run.v1";
     public const string OrchestrationRead = "work.orchestration.read";
     public const string OrchestrationPreflight = "work.orchestration.preflight";
@@ -77,7 +78,7 @@ public static class WorkManagementCapabilityNames
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
         OrchestrationResume, OrchestrationCancel, OrchestrationRetry, OrchestrationDecideApproval,
         OrchestrationConfigureSoftwareTemplate, OrchestrationConfigureProfileV1,
-        FlowMetricsReadV1, ExecutionRunV1,
+        FlowMetricsReadV1, ExecutionRunV1, ExecutionRunV2,
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
         PersonalTodoActivate,
         PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,
@@ -112,6 +113,8 @@ public static class WorkBoardProfileKeys
 {
     public const string GeneralWorkV1 = "general-work.v1";
     public const string SoftwareDeliveryV1 = "software-delivery.v1";
+    public const string SoftwareDeliveryV2 = "software-delivery.v2";
+    public const string ProjectDeliveryV2 = "project-delivery.v2";
 }
 
 /// <summary>Stable provider-neutral work type keys. Kind is derived from these definitions.</summary>
@@ -124,6 +127,12 @@ public static class WorkItemTypeKeys
     public const string SoftwareEpicV1 = "software.epic.v1";
     public const string SoftwareStoryV1 = "software.story.v1";
     public const string SoftwareTaskV1 = "software.task.v1";
+    public const string SoftwareEpicV2 = "software.epic.v2";
+    public const string SoftwareStoryV2 = "software.story.v2";
+    public const string SoftwareTaskV2 = "software.task.v2";
+    public const string ProjectEpicV2 = "project.epic.v2";
+    public const string ProjectStoryV2 = "project.story.v2";
+    public const string ProjectTaskV2 = "project.task.v2";
 }
 
 public static class WorkItemApprovalPolicyKeys
@@ -631,6 +640,8 @@ public sealed record WorkItemDeliverySpecification(
     IReadOnlyList<string>? Constraints = null)
 {
     public string BaseBranch { get; init; } = string.Empty;
+    public string DeliveryKind { get; init; } = "Code";
+    public Guid? DeliveryPlanId { get; init; }
     public Guid? QualityGateColumnId { get; init; }
     public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
     public bool IsQaTrackingDefect { get; init; }
@@ -640,6 +651,7 @@ public sealed record WorkItemPlanningSpecification(
     IReadOnlyList<string> AcceptanceCriteria,
     IReadOnlyList<string>? Constraints = null)
 {
+    public string DeliveryKind { get; init; } = "Code";
     public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
     public PersonalWorkPlanLink? PersonalPlan { get; init; }
     public IReadOnlyList<WorkTechnicalDelegationRecommendation> DelegationRecommendations { get; init; } = [];
