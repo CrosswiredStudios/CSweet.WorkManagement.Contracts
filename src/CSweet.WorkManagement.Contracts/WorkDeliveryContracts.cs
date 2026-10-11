@@ -35,6 +35,8 @@ public sealed record WorkDeliveryBuildSpecification(Guid ToolchainDefinitionId, 
     string RecipeKey, string TargetKey, JsonElement Configuration);
 public sealed record WorkDeliveryScopeAssignment(string Scope, Guid? ItemId,
     Guid BoardId, IReadOnlyList<WorkStageAssignment> Stages);
+/// <summary>Proposed task staffing for draft validation only. Activation requires finalized, authorized task assignments.</summary>
+public sealed record WorkDeliveryTaskAssignment(Guid ItemId, IReadOnlyList<WorkStageAssignment> Stages);
 public sealed record WorkDeliveryScopeSnapshot(string Scope, Guid? ItemId, Guid BoardId,
     long PlanningRevision, IReadOnlyList<Guid> ChildIds, WorkItemPlanningSpecification Planning,
     IReadOnlyList<WorkStageAssignment> Stages)
@@ -50,6 +52,7 @@ public sealed record ConfigureWorkDeliveryPlanRequest(Guid WorkstreamId, string 
     public Guid? PlanId { get; init; }
     public long ExpectedRevision { get; init; }
     public WorkItemPlanningSpecification? ReleasePlanning { get; init; }
+    public IReadOnlyList<WorkDeliveryTaskAssignment> TaskAssignments { get; init; } = [];
 }
 public sealed record ReadWorkDeliveryPlansRequest(Guid WorkstreamId, Guid? PlanId = null,
     int Limit = 50, Guid? AfterId = null);

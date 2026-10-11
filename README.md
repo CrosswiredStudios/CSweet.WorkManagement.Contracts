@@ -41,3 +41,5 @@ Pass an optional package version and output root:
 Packages are written to `artifacts\packages\<version>` by default.
 
 Version 3.21.0 adds typed personal development plans on the existing Epic → Story → Task hierarchy. Personal tickets expose kind, parent, plan root, execution phase, and acceptance criteria. CreatePersonalWorkPlanRequest submits the entire bounded backlog atomically; ReportPersonalWorkPlanTaskRequest carries revision-checked task progress and evidence. PersonalWorkPlanLink fits the existing planning specification without changing existing assignment fields or requiring a new hierarchy model.
+
+ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.27.0) optionally carries draft task staffing proposals. Proposals are advisory draft input; activation still requires authorized finalized task assignments and delivery metadata. Legacy requests deserialize with an empty proposal collection.
