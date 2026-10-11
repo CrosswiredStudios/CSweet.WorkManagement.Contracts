@@ -28,6 +28,8 @@ public sealed record WorkDeliveryBranchBinding(Guid RepositoryId, string Scope, 
     string SourceBranch, string TargetBranch)
 {
     public WorkDeliveryBuildSpecification? Build { get; init; }
+    /// <summary>certified-build (default) or compute-test. Compute tests authorize a review link, never public deployment.</summary>
+    public string ReadinessMode { get; init; } = "certified-build";
 }
 public sealed record WorkDeliveryBuildSpecification(Guid ToolchainDefinitionId, Guid ProviderInstallationId,
     string RecipeKey, string TargetKey, JsonElement Configuration);
@@ -83,8 +85,14 @@ public sealed record WorkDeliveryReviewResult(string CandidateDigest, bool Appro
 {
     public IReadOnlyList<WorkDeliveryValidationEvidence> Validations { get; init; } = [];
     public IReadOnlyList<Guid> BuildIds { get; init; } = [];
+    public IReadOnlyList<WorkDeliveryComputeEvidence> ComputeTests { get; init; } = [];
 }
 public sealed record WorkDeliveryBuildPending(string CandidateDigest, IReadOnlyList<Guid> BuildIds);
+/// <summary>Durable wake receipt. RetryAt bounds recovery of setup or authority waits without throwing away the candidate.</summary>
+public sealed record WorkDeliveryComputePending(string CandidateDigest, IReadOnlyList<Guid> OperationIds, DateTimeOffset RetryAt);
+public sealed record WorkDeliveryComputeEvidence(Guid RepositoryId, string CommitSha, string ArchiveSha256,
+    Guid EnvironmentId, long Generation, Guid ValidationOperationId, Guid PublicationOperationId,
+    string Url, DateTimeOffset UrlExpiresAt);
 public sealed record WorkDeliveryValidationEvidence(Guid RepositoryId, string CommitSha, string Command,
     int ExitCode, bool Succeeded, string Output);
 public sealed record ReadWorkDeliveryEvidenceRequest(Guid PlanId, Guid ExecutionId, Guid? RepositoryId = null);
