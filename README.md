@@ -1,5 +1,11 @@
 # C-Sweet Work Management Contracts
 
+Version 3.29.0 adds `WorkArtifactDelivery`, the shared exact-document author output.
+Use `ToOutput()` to write canonical `artifactId`, `revisionId`, `sha256` and
+`remainingRisks` fields. `TryRead()` accepts existing PascalCase and mixed-case
+persisted outcomes, validates nonempty identities and hexadecimal SHA-256 digests,
+and rejects duplicate identity fields. Unknown metadata remains forward compatible.
+
 Version 3.11 adds platform-owned work-item types and board profiles, planning revisions, reusable
 approval policies, proposal provenance, and architecture-review events. Version 3.9 adds technical delegation recommendations, correlated work-item comments, and public
 orchestration read/retry contracts for continuous agent collaboration. Version 3.7 adds grant-governed board metadata configuration through
@@ -42,4 +48,4 @@ Packages are written to `artifacts\packages\<version>` by default.
 
 Version 3.21.0 adds typed personal development plans on the existing Epic → Story → Task hierarchy. Personal tickets expose kind, parent, plan root, execution phase, and acceptance criteria. CreatePersonalWorkPlanRequest submits the entire bounded backlog atomically; ReportPersonalWorkPlanTaskRequest carries revision-checked task progress and evidence. PersonalWorkPlanLink fits the existing planning specification without changing existing assignment fields or requiring a new hierarchy model.
 
-ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.28.0) optionally carries draft task staffing proposals. Proposals are advisory draft input; activation still requires authorized finalized task assignments and delivery metadata. Legacy requests deserialize with an empty proposal collection.
+ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.29.0) optionally carries draft task staffing proposals. Proposals are advisory draft input; activation still requires authorized finalized task assignments and delivery metadata. Legacy requests deserialize with an empty proposal collection.

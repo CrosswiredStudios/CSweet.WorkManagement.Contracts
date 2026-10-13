@@ -1,5 +1,10 @@
 # C-Sweet Work Management Contracts
 
+Version 3.29.0 adds `WorkArtifactDelivery`: canonical exact-document author output
+and validated legacy-compatible reads. `ToOutput()` fixes wire names independently
+of serializer settings; `TryRead()` supports persisted PascalCase and rejects
+malformed identities, invalid SHA-256 digests and ambiguous duplicate fields.
+
 Version 3.13 adds generic, profile-driven Workstreams, portfolio supervision, authority envelopes,
 milestone gates, correlated decisions, structured review findings, authenticated work context, and
 generic delivery-evidence capability and event names. Domain-specific project types remain in
