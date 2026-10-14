@@ -6,8 +6,7 @@ namespace CSweet.WorkManagement.Contracts;
 /// <summary>Canonical capability names for the agent-facing work-management protocol.</summary>
 public static class WorkManagementCapabilityNames
 {
-    public const string ExecutionRunV2 = "work.execution.run.v2";
-    public const string ExecutionRunV1 = "work.execution.run.v1";
+    public const string ExecutionRun = "work.execution.run";
     public const string OrchestrationRead = "work.orchestration.read";
     public const string OrchestrationPreflight = "work.orchestration.preflight";
     public const string OrchestrationStart = "work.orchestration.start";
@@ -78,7 +77,7 @@ public static class WorkManagementCapabilityNames
         OrchestrationRead, OrchestrationPreflight, OrchestrationStart, OrchestrationPause,
         OrchestrationResume, OrchestrationCancel, OrchestrationRetry, OrchestrationDecideApproval,
         OrchestrationConfigureSoftwareTemplate, OrchestrationConfigureProfileV1,
-        FlowMetricsReadV1, ExecutionRunV1, ExecutionRunV2,
+        FlowMetricsReadV1, ExecutionRun,
         PersonalTodoRead, PersonalTodoAdd, PersonalTodoReorder, PersonalTodoRequeue,
         PersonalTodoActivate,
         PersonalTodoClaim, PersonalTodoComplete, PersonalTodoBlock, PersonalTodoRelease,

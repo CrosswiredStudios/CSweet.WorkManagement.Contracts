@@ -1,6 +1,12 @@
 # C-Sweet Work Management Contracts
 
-Version 3.29.0 adds `WorkArtifactDelivery`: canonical exact-document author output
+Version 4.0.0 replaces the parallel execution APIs with one scope-aware
+`WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
+retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
+the platform, SDK and executing agents together. Old execution envelopes are not
+translated or accepted as the new capability.
+
+Version 3.29.0 added `WorkArtifactDelivery`: canonical exact-document author output
 and validated legacy-compatible reads. `ToOutput()` fixes wire names independently
 of serializer settings; `TryRead()` supports persisted PascalCase and rejects
 malformed identities, invalid SHA-256 digests and ambiguous duplicate fields.

@@ -187,7 +187,7 @@ public sealed class WorkManagementContractsTests
     [InlineData(WorkManagementCapabilityNames.OrchestrationStart)]
     [InlineData(WorkManagementCapabilityNames.OrchestrationRetry)]
     [InlineData(WorkManagementCapabilityNames.SprintCarryOver)]
-    [InlineData(WorkManagementCapabilityNames.ExecutionRunV1)]
+    [InlineData(WorkManagementCapabilityNames.ExecutionRun)]
     public void CapabilityNames_UseWorkNamespace(string capability)
     {
         Assert.StartsWith("work.", capability, StringComparison.Ordinal);
@@ -265,7 +265,7 @@ public sealed class WorkManagementContractsTests
     public void AssignmentContracts_SeparateRoleEligibilityFromSkillPreference()
     {
         var requirements = new WorkAssignmentRequirements(
-            "specialist", ["required-skill"], ["preferred-skill"], [WorkManagementCapabilityNames.ExecutionRunV1]);
+            "specialist", ["required-skill"], ["preferred-skill"], [WorkManagementCapabilityNames.ExecutionRun]);
         var selection = new WorkAssignmentSelectionEvidence(
             Guid.NewGuid(), 4, new string('a', 64), ["required-skill", "preferred-skill"],
             new string('b', 64), DateTimeOffset.UtcNow);

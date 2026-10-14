@@ -138,29 +138,6 @@ public sealed record WorkExecutionInputV1(
     public WorkAssignmentSelectionEvidence? AssignmentSelection { get; init; }
 }
 
-public sealed record WorkExecutionAssignmentV1(
-    Guid SprintExecutionId,
-    Guid ItemExecutionId,
-    Guid StageExecutionId,
-    Guid AttemptId,
-    Guid OrganizationId,
-    Guid BoardId,
-    Guid SprintId,
-    Guid ItemId,
-    long AssignmentRevision,
-    string BoardKey,
-    string ItemIdentifier,
-    Guid PolicyRevisionId,
-    string StageKey,
-    int Traversal,
-    int Attempt,
-    DateTimeOffset Deadline,
-    string Instructions,
-    JsonElement Item,
-    JsonElement Input,
-    IReadOnlyList<WorkExecutionOutcomeV1> PriorOutcomes,
-    IReadOnlyList<WorkExecutionEvidence> Evidence);
-
 public sealed record WorkExecutionOutcomeV1(
     Guid StageExecutionId,
     Guid AttemptId,

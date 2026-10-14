@@ -127,7 +127,7 @@ public sealed record WorkDeliveryPlanResponse(Guid Id, Guid WorkstreamId, string
 }
 
 /// <summary>A real sprint identity exists only for Task scope. Aggregate reviews use DeliveryExecutionId.</summary>
-public sealed record WorkExecutionAssignmentV2(Guid ExecutionId, Guid StageExecutionId,
+public sealed record WorkExecutionAssignment(Guid ExecutionId, Guid StageExecutionId,
     Guid AttemptId, Guid OrganizationId, Guid WorkstreamId, Guid BoardId, Guid? ItemId,
     string Scope, Guid? DeliveryPlanId, long ScopeRevision, Guid? SprintExecutionId,
     Guid? SprintId, long AssignmentRevision, string Identifier, Guid? PolicyRevisionId,
@@ -140,22 +140,21 @@ public sealed record WorkExecutionAssignmentV2(Guid ExecutionId, Guid StageExecu
     public Guid? AgentInstallationId { get; init; }
     public long PlanningRevision { get; init; }
     public IReadOnlyList<string> PermittedOutcomes { get; init; } = [];
-    public static WorkExecutionAssignmentV2 FromTask(WorkExecutionAssignmentV1 task,
-        Guid projectId, Guid? planId, long scopeRevision) => new(task.ItemExecutionId,
-        task.StageExecutionId, task.AttemptId, task.OrganizationId, projectId, task.BoardId,
-        task.ItemId, WorkExecutionScopes.Task, planId, scopeRevision, task.SprintExecutionId,
-        task.SprintId, task.AssignmentRevision, task.ItemIdentifier, task.PolicyRevisionId,
-        task.StageKey, task.Traversal, task.Attempt, task.Deadline, task.Instructions,
-        task.Item, task.Input, task.PriorOutcomes, task.Evidence);
-
-    public WorkExecutionAssignmentV1 ToTaskAssignment()
+    /// <summary>Validate task authority without translating or dropping envelope fields.</summary>
+    public WorkExecutionAssignment RequireTaskScope()
     {
         if (Scope != WorkExecutionScopes.Task || SprintExecutionId is not { } execution ||
             SprintId is not { } sprint || ItemId is not { } item || PolicyRevisionId is not { } policy)
             throw new InvalidOperationException("An aggregate assignment is not sprint work.");
-        return new(execution, ExecutionId, StageExecutionId, AttemptId, OrganizationId,
-            BoardId, sprint, item, AssignmentRevision, Identifier.Split('-')[0], Identifier,
-            policy, StageKey, Traversal, Attempt, Deadline, Instructions, Item,
-            Input, PriorOutcomes, Evidence);
+        return this;
     }
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Guid TaskItemId => RequireTaskScope().ItemId!.Value;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Guid TaskSprintId => RequireTaskScope().SprintId!.Value;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Guid TaskSprintExecutionId => RequireTaskScope().SprintExecutionId!.Value;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Guid TaskPolicyRevisionId => RequireTaskScope().PolicyRevisionId!.Value;
 }
