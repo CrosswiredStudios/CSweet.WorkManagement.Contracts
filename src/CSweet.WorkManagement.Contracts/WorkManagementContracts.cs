@@ -119,6 +119,7 @@ public static class WorkBoardProfileKeys
 /// <summary>Stable provider-neutral work type keys. Kind is derived from these definitions.</summary>
 public static class WorkItemTypeKeys
 {
+    public const string WorkflowTicketV1 = "work.workflow-ticket.v1";
     public const string GeneralInitiativeV1 = "general.initiative.v1";
     public const string GeneralEpicV1 = "general.epic.v1";
     public const string GeneralStoryV1 = "general.story.v1";
@@ -650,6 +651,8 @@ public sealed record WorkItemPlanningSpecification(
     IReadOnlyList<string> AcceptanceCriteria,
     IReadOnlyList<string>? Constraints = null)
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public WorkItemWorkflowDefinition? Workflow { get; init; }
     public string DeliveryKind { get; init; } = "Code";
     public IReadOnlyList<Guid> DependencyItemIds { get; init; } = [];
     public PersonalWorkPlanLink? PersonalPlan { get; init; }

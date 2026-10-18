@@ -21,12 +21,40 @@ public static class WorkExecutionScopes
     public const string Story = "Story";
     public const string Epic = "Epic";
     public const string Release = "Release";
+    public const string Ticket = "Ticket";
+}
+
+/// <summary>One agent-authored step. Handler selects execution mechanics; Key and order are plan decisions.</summary>
+public sealed record WorkDeliveryTicketStep(string Key, string Handler, WorkStageAssignment Assignment,
+    string Instructions = "");
+public sealed record WorkItemWorkflowDefinition(IReadOnlyList<WorkDeliveryTicketStep> Steps)
+{
+    public string Scope { get; init; } = WorkExecutionScopes.Ticket;
+    public Guid? ScopeItemId { get; init; }
+    public IReadOnlyList<Guid> EvidenceItemIds { get; init; } = [];
+    public bool PromoteOnCompletion { get; init; }
+    public IReadOnlyList<Guid> CompleteContainerItemIds { get; init; } = [];
+    public IReadOnlyList<Guid> FinalReleaseDependencyItemIds { get; init; } = [];
+}
+/// <summary>A canonical ticket initiates work after its declared predecessors complete.</summary>
+public sealed record WorkDeliveryTicketWorkflow(Guid TicketId, IReadOnlyList<WorkDeliveryTicketStep> Steps)
+{
+    public string Scope { get; init; } = WorkExecutionScopes.Ticket;
+    public Guid? ScopeItemId { get; init; }
+    public IReadOnlyList<Guid> EvidenceItemIds { get; init; } = [];
+    public bool PromoteOnCompletion { get; init; }
+    public IReadOnlyList<Guid> CompleteContainerItemIds { get; init; } = [];
+    public IReadOnlyList<Guid> FinalReleaseDependencyItemIds { get; init; } = [];
+    public WorkItemWorkflowDefinition Definition() => new(Steps) { Scope=Scope,ScopeItemId=ScopeItemId,EvidenceItemIds=EvidenceItemIds,
+        PromoteOnCompletion=PromoteOnCompletion,CompleteContainerItemIds=CompleteContainerItemIds,FinalReleaseDependencyItemIds=FinalReleaseDependencyItemIds };
 }
 
 /// <summary>Repository branches are owned by a delivery scope, never by a caller's workspace.</summary>
 public sealed record WorkDeliveryBranchBinding(Guid RepositoryId, string Scope, Guid? ItemId,
     string SourceBranch, string TargetBranch)
 {
+    /// <summary>When declared, create the target branch from this existing branch before preparing the source.</summary>
+    public string? TargetBaseBranch { get; init; }
     public WorkDeliveryBuildSpecification? Build { get; init; }
     /// <summary>certified-build (default) or compute-test. Compute tests authorize a review link, never public deployment.</summary>
     public string ReadinessMode { get; init; } = "certified-build";
@@ -43,6 +71,9 @@ public sealed record WorkDeliveryScopeSnapshot(string Scope, Guid? ItemId, Guid 
 {
     public IReadOnlyDictionary<Guid, long> ChildPlanningRevisions { get; init; } = new Dictionary<Guid, long>();
     public IReadOnlyDictionary<Guid, string> ChildDeliveryDigests { get; init; } = new Dictionary<Guid, string>();
+    public WorkDeliveryTicketWorkflow? TicketWorkflow { get; init; }
+    public IReadOnlyList<Guid> PredecessorItemIds { get; init; } = [];
+    public long? TicketPlanningRevision { get; init; }
 }
 public sealed record ConfigureWorkDeliveryPlanRequest(Guid WorkstreamId, string Name,
     Guid ManagerOrganizationUserId, IReadOnlyList<Guid> EpicItemIds,
@@ -53,6 +84,7 @@ public sealed record ConfigureWorkDeliveryPlanRequest(Guid WorkstreamId, string 
     public long ExpectedRevision { get; init; }
     public WorkItemPlanningSpecification? ReleasePlanning { get; init; }
     public IReadOnlyList<WorkDeliveryTaskAssignment> TaskAssignments { get; init; } = [];
+    public IReadOnlyList<WorkDeliveryTicketWorkflow> TicketWorkflows { get; init; } = [];
 }
 public sealed record ReadWorkDeliveryPlansRequest(Guid WorkstreamId, Guid? PlanId = null,
     int Limit = 50, Guid? AfterId = null);
@@ -115,7 +147,10 @@ public sealed record WorkDeliveryExecutionResponse(Guid Id, string Scope, Guid? 
     Guid BoardId, string Status, string CurrentStageKey, long Revision,
     WorkDeliveryCandidate? Candidate, string? BlockedReason,
     IReadOnlyList<WorkStageExecutionResponse> Stages,
-    IReadOnlyList<WorkDeliveryPromotionReceipt> Promotions);
+    IReadOnlyList<WorkDeliveryPromotionReceipt> Promotions)
+{
+    public Guid? WorkflowTicketId { get; init; }
+}
 public sealed record WorkDeliveryPlanResponse(Guid Id, Guid WorkstreamId, string Name,
     Guid ManagerOrganizationUserId, string Status, long Revision, long ScopeRevision,
     IReadOnlyList<Guid> EpicItemIds, IReadOnlyList<WorkDeliveryBranchBinding> Branches,
@@ -140,6 +175,8 @@ public sealed record WorkExecutionAssignment(Guid ExecutionId, Guid StageExecuti
     public Guid? AgentInstallationId { get; init; }
     public long PlanningRevision { get; init; }
     public IReadOnlyList<string> PermittedOutcomes { get; init; } = [];
+    public string? Handler { get; init; }
+    public Guid? WorkflowTicketId { get; init; }
     /// <summary>Validate task authority without translating or dropping envelope fields.</summary>
     public WorkExecutionAssignment RequireTaskScope()
     {

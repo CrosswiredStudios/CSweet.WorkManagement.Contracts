@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 4.0.1 adds automatic integration-conflict author rework to new hierarchical policies.
+Version 5.0.1 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
