@@ -28,6 +28,8 @@ public static class HierarchicalWorkflows
             new("technical-review", "approved", "task-integration"),
             new("technical-review", "rejected", "development", maximumQualityCycles),
             new("task-integration", "merged", "quality"),
+            new("task-integration", "integration_conflicts", "development", maximumQualityCycles),
+            new("task-integration", "target_changed", "technical-review", maximumQualityCycles),
             new("quality", "passed", "done"),
             new("quality", "changes_requested", "development", maximumQualityCycles),
             new("quality", "failed", "development", maximumQualityCycles)
