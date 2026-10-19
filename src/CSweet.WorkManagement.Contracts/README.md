@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.0.1 adds declared ticket workflows alongside integration-conflict author rework and changed-target re-review to new hierarchical workflows.
+Version 5.1.0 adds declared ticket workflows alongside integration-conflict author rework and changed-target re-review to new hierarchical workflows.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
@@ -38,3 +38,5 @@ Version 3.17.0 adds AllowedOutcomeCodes to canonical execution input, so agents 
 Version 3.18.0 adds the canonical orchestration approval decision capability for authorized agent board managers.
 
 Version 3.21.0 adds optional LatestOutcome to orchestration stage reads for delivery review. Older responses omit it.
+
+Forecast-driven planning exposes additive completion ranges, elapsed-history sample counts, unestimated and blocked item counts, generation time and basis through `WorkSprintForecast`. Missing dates never prevent planning. Forecasts do not grant spending, acceptance or release authority.

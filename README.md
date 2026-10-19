@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.0.1 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
+Version 5.1.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
@@ -56,3 +56,5 @@ Packages are written to `artifacts\packages\<version>` by default.
 Version 3.21.0 adds typed personal development plans on the existing Epic → Story → Task hierarchy. Personal tickets expose kind, parent, plan root, execution phase, and acceptance criteria. CreatePersonalWorkPlanRequest submits the entire bounded backlog atomically; ReportPersonalWorkPlanTaskRequest carries revision-checked task progress and evidence. PersonalWorkPlanLink fits the existing planning specification without changing existing assignment fields or requiring a new hierarchy model.
 
 ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.29.0) optionally carries draft task staffing proposals. Proposals are advisory draft input; activation still requires authorized finalized task assignments and delivery metadata. Legacy requests deserialize with an empty proposal collection.
+
+Forecast-driven planning exposes additive completion ranges, elapsed-history sample counts, unestimated and blocked item counts, generation time and basis through `WorkSprintForecast`. Missing dates never prevent planning. Forecasts do not grant spending, acceptance or release authority.

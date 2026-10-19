@@ -6,6 +6,22 @@ namespace CSweet.WorkManagement.Contracts.Tests;
 public sealed class WorkManagementContractsTests
 {
     [Fact]
+    public void ForecastRangeIsAdditiveAndOldPayloadsRemainReadable()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        var old = new WorkSprintForecast(Guid.NewGuid(), "Increment", 5, 2, 3, false);
+        var legacyJson = JsonSerializer.Serialize(new { old.SprintId, old.SprintName, old.RemainingPoints,
+            old.AverageVelocity, old.ProjectedSprintsRequired, old.IsOverCapacity }, options);
+        var legacy = JsonSerializer.Deserialize<WorkSprintForecast>(legacyJson, options)!;
+        Assert.Null(legacy.LatestCompletionAt);
+        var forecast = old with { GeneratedAt = DateTimeOffset.UtcNow, EarliestCompletionAt = DateTimeOffset.UtcNow.AddHours(2),
+            LatestCompletionAt = DateTimeOffset.UtcNow.AddHours(5), HistoricalSampleCount = 3,
+            UnestimatedItemCount = 1, BlockingItemCount = 1, Basis = "Observed elapsed history; conditional on resolved dependencies." };
+        var roundtrip = JsonSerializer.Deserialize<WorkSprintForecast>(JsonSerializer.Serialize(forecast, options), options);
+        Assert.Equal(forecast, roundtrip);
+    }
+
+    [Fact]
     public void TypedWorkCatalog_SeparatesHierarchyFromDomainPolicy()
     {
         var softwareStory = new WorkItemTypeDefinition(
