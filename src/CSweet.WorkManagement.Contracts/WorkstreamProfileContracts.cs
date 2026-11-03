@@ -232,7 +232,12 @@ public sealed record WorkstreamPlanProposalV2Request(
     JsonElement ProfileData,
     WorkstreamAuthorityEnvelope AuthorityEnvelope,
     IReadOnlyList<WorkstreamMilestoneProposal> InitialMilestones,
-    IReadOnlyList<EvidenceReference> InitialEvidence);
+    IReadOnlyList<EvidenceReference> InitialEvidence)
+{
+    /// <summary>Adopts an imported Proposed project through the same governed approval path.</summary>
+    public Guid? ExistingProjectId { get; init; }
+    public long? ExpectedProjectRevision { get; init; }
+}
 
 public sealed record ReadWorkstreamRequest(Guid WorkstreamId);
 
