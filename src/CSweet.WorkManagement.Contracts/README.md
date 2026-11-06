@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.2.0 adds declared ticket workflows alongside integration-conflict author rework and changed-target re-review to new hierarchical workflows.
+Version 5.3.0 adds declared ticket workflows alongside integration-conflict author rework and changed-target re-review to new hierarchical workflows.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade

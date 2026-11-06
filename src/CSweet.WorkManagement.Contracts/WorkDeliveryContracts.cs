@@ -11,8 +11,9 @@ public static class WorkDeliveryCapabilities
     public const string Recover = "work.delivery.recover.v1";
     public const string Evidence = "work.delivery.evidence.read.v1";
     public const string Review = "work.delivery.review.complete.v1";
+    public const string Correct = "work.delivery.correction.coordinate.v1";
     public const string Changed = "com.csweet.work-delivery.changed.v1";
-    public static IReadOnlyList<string> All { get; } = [Read, Configure, Control, Accept, Recover, Evidence, Review];
+    public static IReadOnlyList<string> All { get; } = [Read, Configure, Control, Accept, Recover, Evidence, Review, Correct];
 }
 
 public static class WorkExecutionScopes
@@ -100,6 +101,15 @@ public sealed record RecoverWorkDeliveryRequest(Guid PlanId, Guid ExecutionId,
     public IReadOnlyList<WorkDeliveryFindingResolution> Resolutions { get; init; } = [];
 }
 public sealed record WorkDeliveryFindingResolution(Guid FindingId, IReadOnlyList<Guid> RemediationTaskIds, string Evidence);
+/// <summary>Durable manager-owned handoff, independent of incident prose and the original sprint.</summary>
+public sealed record WorkDeliveryCorrection(Guid Id, Guid ExecutionId, string CandidateDigest, Guid BoardId,
+    Guid OwnerOrganizationUserId, string Status, long Revision, IReadOnlyList<Guid> FindingIds,
+    Guid? SourceItemId = null, Guid? FollowUpPlanId = null, IReadOnlyList<Guid>? RemediationTaskIds = null,
+    string? WaitingReason = null);
+/// <summary>Bind authorized follow-up work, or retain an explicit planning/staffing wait. Never accepts a model claim of completion.</summary>
+public sealed record CoordinateWorkDeliveryCorrectionRequest(Guid PlanId, Guid CorrectionId, long ExpectedRevision,
+    string IdempotencyKey, Guid? SourceItemId = null, Guid? FollowUpPlanId = null,
+    IReadOnlyList<Guid>? RemediationTaskIds = null, string? WaitingReason = null);
 public sealed record WorkDeliveryFindingResponse(Guid Id, Guid ExecutionId, string CandidateDigest, string Summary,
     string Status, IReadOnlyList<Guid> RemediationTaskIds, string? ResolutionEvidence);
 public sealed record CompleteWorkDeliveryReviewRequest(Guid PlanId, Guid ExecutionId,
@@ -159,6 +169,7 @@ public sealed record WorkDeliveryPlanResponse(Guid Id, Guid WorkstreamId, string
     DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
 {
     public IReadOnlyList<WorkDeliveryFindingResponse> Findings { get; init; } = [];
+    public IReadOnlyList<WorkDeliveryCorrection> Corrections { get; init; } = [];
 }
 
 /// <summary>A real sprint identity exists only for Task scope. Aggregate reviews use DeliveryExecutionId.</summary>

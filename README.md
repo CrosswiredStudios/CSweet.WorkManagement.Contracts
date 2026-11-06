@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.2.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
+Version 5.3.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
@@ -58,3 +58,6 @@ Version 3.21.0 adds typed personal development plans on the existing Epic → St
 ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.29.0) optionally carries draft task staffing proposals. Proposals are advisory draft input; activation still requires authorized finalized task assignments and delivery metadata. Legacy requests deserialize with an empty proposal collection.
 
 Forecast-driven planning exposes additive completion ranges, elapsed-history sample counts, unestimated and blocked item counts, generation time and basis through `WorkSprintForecast`. Missing dates never prevent planning. Forecasts do not grant spending, acceptance or release authority.
+
+
+5.3.0 adds `WorkDeliveryCorrection`, `CoordinateWorkDeliveryCorrectionRequest`, plan correction state, and the manager-scoped `work.delivery.correction.coordinate.v1` capability. Correction handoffs are independent of sprint closure and incident presentation.
