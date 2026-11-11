@@ -661,6 +661,92 @@ public sealed record WorkItemPlanningSpecification(
     public string? ArchitectureArtifactDigest { get; init; }
     /// <summary>Digest of an exact approved artifact package used as planning evidence.</summary>
     public ArtifactPackageDigest? ArtifactPackageDigest { get; init; }
+    /// <summary>
+    /// Evidence the candidate must carry, declared by planning so the author, the technical reviewer and QA
+    /// apply one rule. <c>null</c>: not declared (planned before 5.4.0); consumers may use their legacy rules.
+    /// Empty: planning declared that no special verification is required.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WorkItemVerificationRequirement>? Verifications { get; init; }
+}
+
+/// <summary>Verification kinds a ticket can require of its candidate.</summary>
+public static class WorkItemVerificationKinds
+{
+    /// <summary>Launch the built web output in real Chromium; record page errors, failed assets, the visible surface and a screenshot.</summary>
+    public const string BrowserSmoke = "browser-smoke";
+
+    /// <summary>
+    /// The standard browser-smoke receipt: the author's validations contain this standalone command, followed by the
+    /// workspace-relative build directory and <c>--canvas</c> when a canvas is required, with exit code 0.
+    /// </summary>
+    public const string BrowserSmokeReceiptCommand = "node .csweet/browser-smoke.cjs";
+
+    public static IReadOnlyList<string> All { get; } = [BrowserSmoke];
+}
+
+/// <summary>One piece of evidence a ticket's candidate must carry.</summary>
+public sealed record WorkItemVerificationRequirement(string Kind)
+{
+    /// <summary>The page must show a canvas (game renderers).</summary>
+    public bool RequireCanvas { get; init; }
+    /// <summary>The renderer must obtain a WebGL context.</summary>
+    public bool RequireWebGl { get; init; }
+    /// <summary>Viewport widths to check. Empty means the checker's default desktop width.</summary>
+    public IReadOnlyList<int> ViewportWidths { get; init; } = [];
+}
+
+/// <summary>Shared reading and validation of declared verification requirements.</summary>
+public static class WorkItemVerifications
+{
+    public const int MaxRequirements = 4;
+    public const int MaxViewportWidths = 4;
+    public const int MinViewportWidth = 320;
+    public const int MaxViewportWidth = 3840;
+
+    /// <summary>True when planning declared its verification requirements, including an explicit "none".</summary>
+    public static bool IsDeclared(WorkItemPlanningSpecification? planning) => planning?.Verifications is not null;
+
+    /// <summary>The declared real-browser requirement, if any.</summary>
+    public static WorkItemVerificationRequirement? BrowserSmoke(WorkItemPlanningSpecification? planning) =>
+        planning?.Verifications?.FirstOrDefault(v => v.Kind == WorkItemVerificationKinds.BrowserSmoke);
+
+    /// <summary>
+    /// True when one executed validation is a passing browser-smoke receipt that meets the requirement:
+    /// the standard command with a build directory, <c>--canvas</c> when required, succeeded with exit code 0.
+    /// </summary>
+    public static bool IsBrowserSmokeReceipt(string? command, bool succeeded, int exitCode, WorkItemVerificationRequirement requirement)
+    {
+        if (!succeeded || exitCode != 0 || string.IsNullOrWhiteSpace(command)) return false;
+        var parts = command.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var prefix = WorkItemVerificationKinds.BrowserSmokeReceiptCommand.Split(' ');
+        if (parts.Length < prefix.Length + 1 || !parts.Take(prefix.Length).SequenceEqual(prefix, StringComparer.Ordinal)) return false;
+        var arguments = parts.Skip(prefix.Length).ToArray();
+        // One build directory, optionally --canvas; nothing chained.
+        if (arguments[0].StartsWith('-') || arguments.Skip(1).Any(a => a != "--canvas") || arguments.Length > 2) return false;
+        return !requirement.RequireCanvas || arguments.Contains("--canvas", StringComparer.Ordinal);
+    }
+
+    /// <summary>Problems with a declaration; empty when it is valid. <c>null</c> (not declared) is valid.</summary>
+    public static IReadOnlyList<string> Validate(IReadOnlyList<WorkItemVerificationRequirement>? verifications)
+    {
+        var issues = new List<string>();
+        if (verifications is null) return issues;
+        if (verifications.Count > MaxRequirements) issues.Add($"Declare at most {MaxRequirements} verification requirements.");
+        foreach (var requirement in verifications)
+        {
+            if (requirement is null) { issues.Add("A verification requirement is empty."); continue; }
+            if (!WorkItemVerificationKinds.All.Contains(requirement.Kind, StringComparer.Ordinal))
+                issues.Add($"Unknown verification kind '{requirement.Kind}'. Use one of: {string.Join(", ", WorkItemVerificationKinds.All)}.");
+            var widths = requirement.ViewportWidths ?? [];
+            if (widths.Count > MaxViewportWidths || widths.Distinct().Count() != widths.Count ||
+                widths.Any(w => w < MinViewportWidth || w > MaxViewportWidth))
+                issues.Add($"Viewport widths must be distinct, at most {MaxViewportWidths}, each {MinViewportWidth}-{MaxViewportWidth} pixels.");
+        }
+        if (verifications.Where(v => v is not null).GroupBy(v => v.Kind, StringComparer.Ordinal).Any(g => g.Count() > 1))
+            issues.Add("Declare each verification kind once.");
+        return issues;
+    }
 }
 
 public sealed record ArtifactPackageDigest(

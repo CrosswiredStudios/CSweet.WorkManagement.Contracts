@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.3.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
+Version 5.4.0 adds per-ticket verification requirements (`WorkItemPlanningSpecification.Verifications`). Version 5.3.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
@@ -59,5 +59,7 @@ ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.29.0) optionally carries dra
 
 Forecast-driven planning exposes additive completion ranges, elapsed-history sample counts, unestimated and blocked item counts, generation time and basis through `WorkSprintForecast`. Missing dates never prevent planning. Forecasts do not grant spending, acceptance or release authority.
 
+
+5.4.0 adds `WorkItemVerificationRequirement`, `WorkItemVerificationKinds` (`browser-smoke`) and `WorkItemVerifications`. `WorkItemPlanningSpecification.Verifications` is `null` on tickets planned before 5.4.0 and an explicit list afterwards; an empty list means planning declared no special verification. The author, the technical reviewer and QA read this one declaration instead of inferring browser evidence from criteria text.
 
 5.3.0 adds `WorkDeliveryCorrection`, `CoordinateWorkDeliveryCorrectionRequest`, plan correction state, and the manager-scoped `work.delivery.correction.coordinate.v1` capability. Correction handoffs are independent of sprint closure and incident presentation.
