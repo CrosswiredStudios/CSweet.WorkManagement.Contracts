@@ -688,6 +688,18 @@ public static class WorkItemVerificationKinds
     /// </summary>
     public const string BrowserInteraction = "browser-interaction";
 
+    /// <summary>
+    /// The standard browser-scenarios receipt (5.6.0), required with <see cref="BrowserInteraction"/>: the author's
+    /// validations contain this standalone command with the workspace-relative build directory, optionally followed by
+    /// <c>--record &lt;path.md&gt;</c> pairs naming observation records the run regenerated, with exit code 0. The runner
+    /// opens the build with <see cref="ScenarioQueryParameter"/>, calls <c>window.csweetScenarios.run()</c> and judges
+    /// each check from its expected and observed values; the page never declares its own result.
+    /// </summary>
+    public const string BrowserScenariosReceiptCommand = "node .csweet/browser-scenarios.cjs";
+
+    /// <summary>Query parameter the scenario runner adds; a page may install its scenario harness only when present.</summary>
+    public const string ScenarioQueryParameter = "csweet-scenarios";
+
     public static IReadOnlyList<string> All { get; } = [BrowserSmoke, BrowserInteraction];
 }
 
@@ -749,6 +761,40 @@ public static class WorkItemVerifications
         if (arguments[0].StartsWith('-') || arguments.Skip(1).Any(a => a != "--canvas") || arguments.Length > 2) return false;
         return !requirement.RequireCanvas || arguments.Contains("--canvas", StringComparer.Ordinal);
     }
+
+    /// <summary>
+    /// True when one executed validation is a passing browser-scenarios receipt: the standard command, one
+    /// workspace-relative build directory, optional <c>--record &lt;path.md&gt;</c> pairs, nothing chained, exit code 0.
+    /// </summary>
+    public static bool IsBrowserScenariosReceipt(string? command, bool succeeded, int exitCode)
+    {
+        if (!succeeded || exitCode != 0 || string.IsNullOrWhiteSpace(command)) return false;
+        var parts = command.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var prefix = WorkItemVerificationKinds.BrowserScenariosReceiptCommand.Split(' ');
+        if (parts.Length < prefix.Length + 1 || !parts.Take(prefix.Length).SequenceEqual(prefix, StringComparer.Ordinal)) return false;
+        var arguments = parts.Skip(prefix.Length).ToArray();
+        if (!IsRelativePath(arguments[0]) || (arguments.Length - 1) % 2 != 0) return false;
+        for (var i = 1; i < arguments.Length; i += 2)
+            if (arguments[i] != "--record" || !IsRelativePath(arguments[i + 1]) ||
+                !arguments[i + 1].EndsWith(".md", StringComparison.OrdinalIgnoreCase)) return false;
+        return true;
+    }
+
+    /// <summary>Observation records a browser-scenarios receipt regenerated, in command order.</summary>
+    public static IReadOnlyList<string> ScenarioRecords(string? command)
+    {
+        if (!IsBrowserScenariosReceipt(command, true, 0)) return [];
+        var arguments = command!.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var records = new List<string>();
+        for (var i = 0; i < arguments.Length - 1; i++)
+            if (arguments[i] == "--record") records.Add(arguments[i + 1]);
+        return records;
+    }
+
+    // Workspace-relative, no traversal, no shell syntax.
+    private static bool IsRelativePath(string value) =>
+        value.Length is > 0 and <= 240 && !value.StartsWith('-') && !value.StartsWith('/') &&
+        value.Split('/').All(x => x.Length > 0 && x != ".." && x.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-'));
 
     /// <summary>Problems with a declaration; empty when it is valid. <c>null</c> (not declared) is valid.</summary>
     public static IReadOnlyList<string> Validate(IReadOnlyList<WorkItemVerificationRequirement>? verifications)

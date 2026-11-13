@@ -62,6 +62,33 @@ public sealed class WorkItemVerificationTests
     }
 }
 
+public sealed class BrowserScenariosReceiptTests
+{
+    [Theory]
+    [InlineData("node .csweet/browser-scenarios.cjs dist", true, 0, true)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist/spike --record spike-notes/observation.md", true, 0, true)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist --record a.md --record docs/b.md", true, 0, true)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist", false, 1, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist", true, 1, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs", true, 0, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs ../dist", true, 0, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist --record", true, 0, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist --record notes.txt", true, 0, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist --canvas", true, 0, false)]
+    [InlineData("node .csweet/browser-scenarios.cjs dist && echo ok", true, 0, false)]
+    [InlineData("node .csweet/browser-smoke.cjs dist --canvas", true, 0, false)]
+    public void Only_the_standard_passing_command_is_a_receipt(string command, bool succeeded, int exitCode, bool expected) =>
+        Assert.Equal(expected, WorkItemVerifications.IsBrowserScenariosReceipt(command, succeeded, exitCode));
+
+    [Fact]
+    public void The_receipt_names_the_records_it_regenerated()
+    {
+        Assert.Equal(["a.md", "docs/b.md"], WorkItemVerifications.ScenarioRecords("node .csweet/browser-scenarios.cjs dist --record a.md --record docs/b.md"));
+        Assert.Empty(WorkItemVerifications.ScenarioRecords("node .csweet/browser-scenarios.cjs dist"));
+        Assert.Empty(WorkItemVerifications.ScenarioRecords("node .csweet/browser-scenarios.cjs dist --record x.txt"));
+    }
+}
+
 public sealed class BrowserSmokeReceiptTests
 {
     private static readonly WorkItemVerificationRequirement Canvas = new(WorkItemVerificationKinds.BrowserSmoke) { RequireCanvas = true };
