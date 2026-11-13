@@ -19,6 +19,26 @@ public static class WorkExecutionDispositions
     public const string Failed = "Failed";
 }
 
+/// <summary>
+/// Cross-agent diagnostics on a <see cref="WorkExecutionOutcomeV1"/>. Each token says who can clear a Blocked outcome,
+/// so a manager agent routes it without parsing localized summary text.
+/// </summary>
+public static class WorkExecutionDiagnostics
+{
+    /// <summary>
+    /// Only a person can clear this: a scope, criteria, environment or tooling decision. A plain retry changes nothing
+    /// until the decision is made; the summary states the decision needed.
+    /// </summary>
+    public const string DecisionRequired = "decision-required:v1";
+
+    /// <summary>
+    /// The executing agent hit a defect in its own processing (an internal invariant, contract or state error), not a
+    /// problem with the work product. A retry of the same agent version is not expected to help; the agent needs an
+    /// update or an operator's investigation. The summary carries the agent's exact reason.
+    /// </summary>
+    public const string AgentDefect = "agent-defect:v1";
+}
+
 public static class WorkMergeModes
 {
     public const string ManagerApproval = "ManagerApproval";

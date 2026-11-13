@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.4.0 adds per-ticket verification requirements (`WorkItemPlanningSpecification.Verifications`). Version 5.3.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
+Version 5.5.0 adds live browser-interaction verification (`browser-interaction` with `CriterionIndexes`) and `WorkExecutionDiagnostics` for routing Blocked outcomes. Version 5.4.0 adds per-ticket verification requirements (`WorkItemPlanningSpecification.Verifications`). Version 5.3.0 defines ticket-owned workflows, declared predecessors, assigned execution steps and explicit source branch initialization. Delivery plans require fresh workflow tickets; the platform does not synthesize aggregate review stages or migrate legacy executions.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments
 retain sprint authority; aggregate reviews retain delivery-plan authority. Upgrade
@@ -59,6 +59,8 @@ ConfigureWorkDeliveryPlanRequest.TaskAssignments (3.29.0) optionally carries dra
 
 Forecast-driven planning exposes additive completion ranges, elapsed-history sample counts, unestimated and blocked item counts, generation time and basis through `WorkSprintForecast`. Missing dates never prevent planning. Forecasts do not grant spending, acceptance or release authority.
 
+
+5.5.0 adds `WorkItemVerificationKinds.BrowserInteraction` (`browser-interaction`). Its `CriterionIndexes` name, by zero-based index, the acceptance criteria that need live interaction evidence; criteria not named need none. `WorkItemVerifications.ValidatePlanning(planning)` also checks the indexes against the ticket's criteria and requires a browser-smoke requirement alongside. `WorkExecutionDiagnostics` holds the cross-agent tokens on Blocked outcomes: `decision-required:v1` (only a person can clear it) and `agent-defect:v1` (the agent's own processing failed; a retry of the same version is not expected to help).
 
 5.4.0 adds `WorkItemVerificationRequirement`, `WorkItemVerificationKinds` (`browser-smoke`) and `WorkItemVerifications`. `WorkItemPlanningSpecification.Verifications` is `null` on tickets planned before 5.4.0 and an explicit list afterwards; an empty list means planning declared no special verification. The author, the technical reviewer and QA read this one declaration instead of inferring browser evidence from criteria text.
 

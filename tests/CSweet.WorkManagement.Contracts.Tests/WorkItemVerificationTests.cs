@@ -85,4 +85,58 @@ public sealed class BrowserSmokeReceiptTests
         Assert.True(WorkItemVerifications.IsBrowserSmokeReceipt("node .csweet/browser-smoke.cjs dist", true, 0, Page));
         Assert.True(WorkItemVerifications.IsBrowserSmokeReceipt("node .csweet/browser-smoke.cjs build/web --canvas", true, 0, Page));
     }
+
+    private static readonly JsonSerializerOptions InteractionJson = new(JsonSerializerDefaults.Web);
+
+    [Fact]
+    public void An_interaction_requirement_names_its_criteria_and_round_trips()
+    {
+        var planning = new WorkItemPlanningSpecification(["Break"], ["Scene renders", "Ball breaks a block"])
+        {
+            Verifications =
+            [
+                new(WorkItemVerificationKinds.BrowserSmoke) { RequireCanvas = true },
+                new(WorkItemVerificationKinds.BrowserInteraction) { CriterionIndexes = [1] }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(planning, InteractionJson);
+        var restored = JsonSerializer.Deserialize<WorkItemPlanningSpecification>(json, InteractionJson)!;
+
+        Assert.Equal(new[] { 1 }, WorkItemVerifications.InteractionCriteria(restored));
+        Assert.Empty(WorkItemVerifications.ValidatePlanning(restored));
+        // Smoke requirements write no criterion field, so retained planning digests do not change.
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(json, "criterionIndexes"));
+    }
+
+    [Fact]
+    public void Interaction_requirements_are_validated_against_the_planning()
+    {
+        Assert.Contains(WorkItemVerifications.Validate([new(WorkItemVerificationKinds.BrowserInteraction)]),
+            issue => issue.Contains("criterion indexes"));
+        Assert.Contains(WorkItemVerifications.Validate([new(WorkItemVerificationKinds.BrowserInteraction) { CriterionIndexes = [0, 0] }]),
+            issue => issue.Contains("criterion indexes"));
+        Assert.Contains(WorkItemVerifications.Validate([new(WorkItemVerificationKinds.BrowserSmoke) { CriterionIndexes = [0] }]),
+            issue => issue.Contains("Only browser-interaction"));
+
+        var outOfRange = new WorkItemPlanningSpecification(["Break"], ["One criterion"])
+        {
+            Verifications = [new(WorkItemVerificationKinds.BrowserSmoke), new(WorkItemVerificationKinds.BrowserInteraction) { CriterionIndexes = [1] }]
+        };
+        Assert.Contains(WorkItemVerifications.ValidatePlanning(outOfRange), issue => issue.Contains("acceptance criteria"));
+
+        var withoutSmoke = new WorkItemPlanningSpecification(["Break"], ["One criterion"])
+        {
+            Verifications = [new(WorkItemVerificationKinds.BrowserInteraction) { CriterionIndexes = [0] }]
+        };
+        Assert.Contains(WorkItemVerifications.ValidatePlanning(withoutSmoke), issue => issue.Contains("browser-smoke"));
+        Assert.Empty(WorkItemVerifications.InteractionCriteria(new WorkItemPlanningSpecification(["x"], ["y"])));
+    }
+
+    [Fact]
+    public void Routing_diagnostics_keep_their_wire_values()
+    {
+        Assert.Equal("decision-required:v1", WorkExecutionDiagnostics.DecisionRequired);
+        Assert.Equal("agent-defect:v1", WorkExecutionDiagnostics.AgentDefect);
+    }
 }

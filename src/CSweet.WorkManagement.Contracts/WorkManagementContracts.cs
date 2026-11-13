@@ -682,7 +682,13 @@ public static class WorkItemVerificationKinds
     /// </summary>
     public const string BrowserSmokeReceiptCommand = "node .csweet/browser-smoke.cjs";
 
-    public static IReadOnlyList<string> All { get; } = [BrowserSmoke];
+    /// <summary>
+    /// Drive the built web output in real Chromium and observe the behavior named by
+    /// <see cref="WorkItemVerificationRequirement.CriterionIndexes"/>. Criteria not listed need no live interaction evidence.
+    /// </summary>
+    public const string BrowserInteraction = "browser-interaction";
+
+    public static IReadOnlyList<string> All { get; } = [BrowserSmoke, BrowserInteraction];
 }
 
 /// <summary>One piece of evidence a ticket's candidate must carry.</summary>
@@ -694,6 +700,12 @@ public sealed record WorkItemVerificationRequirement(string Kind)
     public bool RequireWebGl { get; init; }
     /// <summary>Viewport widths to check. Empty means the checker's default desktop width.</summary>
     public IReadOnlyList<int> ViewportWidths { get; init; } = [];
+    /// <summary>
+    /// Zero-based indexes into the ticket's acceptance criteria that this requirement covers. Required for
+    /// <see cref="WorkItemVerificationKinds.BrowserInteraction"/>; omitted from JSON when null.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<int>? CriterionIndexes { get; init; }
 }
 
 /// <summary>Shared reading and validation of declared verification requirements.</summary>
@@ -703,6 +715,7 @@ public static class WorkItemVerifications
     public const int MaxViewportWidths = 4;
     public const int MinViewportWidth = 320;
     public const int MaxViewportWidth = 3840;
+    public const int MaxCriterionIndexes = 24;
 
     /// <summary>True when planning declared its verification requirements, including an explicit "none".</summary>
     public static bool IsDeclared(WorkItemPlanningSpecification? planning) => planning?.Verifications is not null;
@@ -710,6 +723,16 @@ public static class WorkItemVerifications
     /// <summary>The declared real-browser requirement, if any.</summary>
     public static WorkItemVerificationRequirement? BrowserSmoke(WorkItemPlanningSpecification? planning) =>
         planning?.Verifications?.FirstOrDefault(v => v.Kind == WorkItemVerificationKinds.BrowserSmoke);
+
+    /// <summary>The declared live-interaction requirement, if any.</summary>
+    public static WorkItemVerificationRequirement? BrowserInteraction(WorkItemPlanningSpecification? planning) =>
+        planning?.Verifications?.FirstOrDefault(v => v.Kind == WorkItemVerificationKinds.BrowserInteraction);
+
+    /// <summary>
+    /// Acceptance criteria (by zero-based index) that need live browser interaction evidence. Empty when none are declared.
+    /// </summary>
+    public static IReadOnlyList<int> InteractionCriteria(WorkItemPlanningSpecification? planning) =>
+        BrowserInteraction(planning)?.CriterionIndexes ?? [];
 
     /// <summary>
     /// True when one executed validation is a passing browser-smoke receipt that meets the requirement:
@@ -738,6 +761,14 @@ public static class WorkItemVerifications
             if (requirement is null) { issues.Add("A verification requirement is empty."); continue; }
             if (!WorkItemVerificationKinds.All.Contains(requirement.Kind, StringComparer.Ordinal))
                 issues.Add($"Unknown verification kind '{requirement.Kind}'. Use one of: {string.Join(", ", WorkItemVerificationKinds.All)}.");
+            if (requirement.Kind == WorkItemVerificationKinds.BrowserInteraction)
+            {
+                var indexes = requirement.CriterionIndexes ?? [];
+                if (indexes.Count is 0 or > MaxCriterionIndexes || indexes.Distinct().Count() != indexes.Count || indexes.Any(i => i < 0))
+                    issues.Add($"A browser-interaction requirement names 1-{MaxCriterionIndexes} distinct, zero-based acceptance criterion indexes.");
+            }
+            else if (requirement.CriterionIndexes is not null)
+                issues.Add($"Only {WorkItemVerificationKinds.BrowserInteraction} names criterion indexes.");
             var widths = requirement.ViewportWidths ?? [];
             if (widths.Count > MaxViewportWidths || widths.Distinct().Count() != widths.Count ||
                 widths.Any(w => w < MinViewportWidth || w > MaxViewportWidth))
@@ -745,6 +776,22 @@ public static class WorkItemVerifications
         }
         if (verifications.Where(v => v is not null).GroupBy(v => v.Kind, StringComparer.Ordinal).Any(g => g.Count() > 1))
             issues.Add("Declare each verification kind once.");
+        return issues;
+    }
+
+    /// <summary>
+    /// <see cref="Validate(IReadOnlyList{WorkItemVerificationRequirement}?)"/> plus checks against the planning itself:
+    /// interaction criterion indexes must name existing acceptance criteria, and live interaction needs a browser-smoke requirement.
+    /// </summary>
+    public static IReadOnlyList<string> ValidatePlanning(WorkItemPlanningSpecification? planning)
+    {
+        var issues = Validate(planning?.Verifications).ToList();
+        if (BrowserInteraction(planning) is not { } interaction) return issues;
+        var count = planning!.AcceptanceCriteria?.Count ?? 0;
+        if ((interaction.CriterionIndexes ?? []).Any(i => i >= count))
+            issues.Add($"Interaction criterion indexes must name one of the ticket's {count} acceptance criteria (zero-based).");
+        if (BrowserSmoke(planning) is null)
+            issues.Add($"A {WorkItemVerificationKinds.BrowserInteraction} requirement needs a {WorkItemVerificationKinds.BrowserSmoke} requirement for the same build.");
         return issues;
     }
 }
