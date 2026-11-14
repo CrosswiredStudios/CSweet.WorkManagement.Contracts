@@ -8,6 +8,7 @@ public static class WorkstreamCapabilityNames
     public const string ReadV1 = "platform.workstream.read.v1";
     public const string PlanProposeV2 = "platform.workstream.plan.propose.v2";
     public const string ChangeProposeV1 = "platform.workstream.change.propose.v1";
+    public const string CompleteDeliveryV1 = "platform.workstream.delivery.complete.v1";
     public const string GateReadV1 = "platform.workstream.gate.read.v1";
     public const string GateSubmitV1 = "platform.workstream.gate.submit.v1";
     public const string GateDecideV1 = "platform.workstream.gate.decide.v1";

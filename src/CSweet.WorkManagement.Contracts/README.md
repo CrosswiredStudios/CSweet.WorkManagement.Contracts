@@ -1,5 +1,7 @@
 # C-Sweet Work Management Contracts
 
+Version 5.7.0 adds exact planning-input reconciliation, attributable effort assessments, actionable readiness owners, multi-source corrective bindings, and evidence-bound final-product completion. The package remains compatible with existing payloads through optional fields.
+
 Version 5.6.0 adds the browser-scenarios receipt (`WorkItemVerificationKinds.BrowserScenariosReceiptCommand`, `WorkItemVerifications.IsBrowserScenariosReceipt`, `ScenarioRecords`) that the author of a `browser-interaction` ticket must carry. Version 5.5.0 adds the `browser-interaction` verification kind with `WorkItemVerificationRequirement.CriterionIndexes` (the acceptance criteria that need live interaction evidence), `WorkItemVerifications.ValidatePlanning(planning)`, and `WorkExecutionDiagnostics` (`decision-required:v1`, `agent-defect:v1`) for routing Blocked outcomes. Version 5.4.0 adds `WorkItemPlanningSpecification.Verifications`: evidence a ticket's candidate must carry, declared once by planning. Version 5.3.0 adds declared ticket workflows alongside integration-conflict author rework and changed-target re-review to new hierarchical workflows.
 Version 4.0.0 replaces the parallel execution APIs with one scope-aware
 `WorkExecutionAssignment` and the `work.execution.run` capability. Task assignments

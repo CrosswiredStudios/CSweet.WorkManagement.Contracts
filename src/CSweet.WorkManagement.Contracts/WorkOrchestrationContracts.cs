@@ -173,7 +173,13 @@ public sealed record WorkOrchestrationValidationError(
     string Message,
     Guid? ItemId = null,
     string? StageKey = null,
-    Guid? AssignmentId = null);
+    Guid? AssignmentId = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Guid? OwnerOrganizationUserId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? NextAction { get; init; }
+}
 
 public sealed record WorkSprintPreflightResult(
     bool IsValid,

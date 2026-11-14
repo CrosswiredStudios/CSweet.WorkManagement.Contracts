@@ -689,7 +689,7 @@ public static class WorkItemVerificationKinds
     public const string BrowserInteraction = "browser-interaction";
 
     /// <summary>
-    /// The standard browser-scenarios receipt (5.6.0), required with <see cref="BrowserInteraction"/>: the author's
+    /// The standard browser-scenarios receipt (5.7.0), required with <see cref="BrowserInteraction"/>: the author's
     /// validations contain this standalone command with the workspace-relative build directory, optionally followed by
     /// <c>--record &lt;path.md&gt;</c> pairs naming observation records the run regenerated, with exit code 0. The runner
     /// opens the build with <see cref="ScenarioQueryParameter"/>, calls <c>window.csweetScenarios.run()</c> and judges
@@ -901,7 +901,14 @@ public sealed record WorkEstimateProvenance(
     Guid CoordinationSessionId,
     long CoordinationTurnRevision,
     string SourceDigest,
-    decimal Confidence);
+    decimal Confidence)
+{
+    /// <summary>For an author's direct assessment, the exact installation-owned judgment instead of a coordination session.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? AssessmentStateKey { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public long? PlanningRevision { get; init; }
+}
 public sealed record WorkItem(
     Guid Id, Guid ColumnId, Guid? ParentItemId, Guid? SprintId, string Kind,
     string Title, string Description, string Status, string Priority,

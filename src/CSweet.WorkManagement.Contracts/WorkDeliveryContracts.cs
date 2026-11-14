@@ -30,6 +30,8 @@ public sealed record WorkDeliveryTicketStep(string Key, string Handler, WorkStag
     string Instructions = "");
 public sealed record WorkItemWorkflowDefinition(IReadOnlyList<WorkDeliveryTicketStep> Steps)
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public WorkApprovedSource? ProjectCompletionSource { get; init; }
     public string Scope { get; init; } = WorkExecutionScopes.Ticket;
     public Guid? ScopeItemId { get; init; }
     public IReadOnlyList<Guid> EvidenceItemIds { get; init; } = [];
@@ -40,15 +42,20 @@ public sealed record WorkItemWorkflowDefinition(IReadOnlyList<WorkDeliveryTicket
 /// <summary>A canonical ticket initiates work after its declared predecessors complete.</summary>
 public sealed record WorkDeliveryTicketWorkflow(Guid TicketId, IReadOnlyList<WorkDeliveryTicketStep> Steps)
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public WorkApprovedSource? ProjectCompletionSource { get; init; }
     public string Scope { get; init; } = WorkExecutionScopes.Ticket;
     public Guid? ScopeItemId { get; init; }
     public IReadOnlyList<Guid> EvidenceItemIds { get; init; } = [];
     public bool PromoteOnCompletion { get; init; }
     public IReadOnlyList<Guid> CompleteContainerItemIds { get; init; } = [];
     public IReadOnlyList<Guid> FinalReleaseDependencyItemIds { get; init; } = [];
-    public WorkItemWorkflowDefinition Definition() => new(Steps) { Scope=Scope,ScopeItemId=ScopeItemId,EvidenceItemIds=EvidenceItemIds,
+    public WorkItemWorkflowDefinition Definition() => new(Steps) { ProjectCompletionSource=ProjectCompletionSource,Scope=Scope,ScopeItemId=ScopeItemId,EvidenceItemIds=EvidenceItemIds,
         PromoteOnCompletion=PromoteOnCompletion,CompleteContainerItemIds=CompleteContainerItemIds,FinalReleaseDependencyItemIds=FinalReleaseDependencyItemIds };
 }
+public sealed record WorkApprovedSource(Guid DocumentId, Guid RevisionId, string Digest);
+public sealed record WorkstreamDeliveryCompletion(Guid PlanId, long ScopeRevision, WorkApprovedSource ApprovedSource);
+public sealed record CompleteWorkstreamDeliveryRequest(Guid WorkstreamId,long ExpectedRevision,WorkstreamDeliveryCompletion Evidence,string IdempotencyKey);
 
 /// <summary>Repository branches are owned by a delivery scope, never by a caller's workspace.</summary>
 public sealed record WorkDeliveryBranchBinding(Guid RepositoryId, string Scope, Guid? ItemId,
@@ -75,6 +82,10 @@ public sealed record WorkDeliveryScopeSnapshot(string Scope, Guid? ItemId, Guid 
     public WorkDeliveryTicketWorkflow? TicketWorkflow { get; init; }
     public IReadOnlyList<Guid> PredecessorItemIds { get; init; } = [];
     public long? TicketPlanningRevision { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WorkDeliveryTaskAssignment>? ChildAssignments { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WorkDeliveryOriginalInput>? ChildInputs { get; init; }
 }
 public sealed record ConfigureWorkDeliveryPlanRequest(Guid WorkstreamId, string Name,
     Guid ManagerOrganizationUserId, IReadOnlyList<Guid> EpicItemIds,
@@ -90,7 +101,19 @@ public sealed record ConfigureWorkDeliveryPlanRequest(Guid WorkstreamId, string 
 public sealed record ReadWorkDeliveryPlansRequest(Guid WorkstreamId, Guid? PlanId = null,
     int Limit = 50, Guid? AfterId = null);
 public sealed record ControlWorkDeliveryPlanRequest(Guid PlanId, long ExpectedRevision,
-    string Action, string IdempotencyKey, string? Reason = null);
+    string Action, string IdempotencyKey, string? Reason = null)
+{
+    /// <summary>Exact manager-approved planning delta. Unlisted changes cannot be adopted by reconciliation.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WorkPlanningRevisionChange>? PlanningChanges { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WorkDeliveryTaskAssignment>? PreservedTaskAssignments { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<WorkDeliveryOriginalInput>? PreservedInputs { get; init; }
+}
+public sealed record WorkPlanningRevisionChange(Guid ItemId, long FromRevision, long ToRevision);
+public sealed record WorkDeliveryOriginalInput(Guid ItemId,string DeliverySpecificationJson,
+    Guid? AccountableOrganizationUserId,IReadOnlyList<WorkStageAssignment> Stages);
 public sealed record DecideWorkDeliveryAcceptanceRequest(Guid PlanId, Guid ExecutionId,
     long ExpectedRevision, string CandidateDigest, bool Approved, string Summary,
     IReadOnlyList<WorkDeliveryCriterionResult> Criteria, IReadOnlyList<string> Findings,
@@ -105,11 +128,19 @@ public sealed record WorkDeliveryFindingResolution(Guid FindingId, IReadOnlyList
 public sealed record WorkDeliveryCorrection(Guid Id, Guid ExecutionId, string CandidateDigest, Guid BoardId,
     Guid OwnerOrganizationUserId, string Status, long Revision, IReadOnlyList<Guid> FindingIds,
     Guid? SourceItemId = null, Guid? FollowUpPlanId = null, IReadOnlyList<Guid>? RemediationTaskIds = null,
-    string? WaitingReason = null);
+    string? WaitingReason = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<Guid>? SourceItemIds { get; init; }
+}
 /// <summary>Bind authorized follow-up work, or retain an explicit planning/staffing wait. Never accepts a model claim of completion.</summary>
 public sealed record CoordinateWorkDeliveryCorrectionRequest(Guid PlanId, Guid CorrectionId, long ExpectedRevision,
     string IdempotencyKey, Guid? SourceItemId = null, Guid? FollowUpPlanId = null,
-    IReadOnlyList<Guid>? RemediationTaskIds = null, string? WaitingReason = null);
+    IReadOnlyList<Guid>? RemediationTaskIds = null, string? WaitingReason = null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<Guid>? SourceItemIds { get; init; }
+}
 public sealed record WorkDeliveryFindingResponse(Guid Id, Guid ExecutionId, string CandidateDigest, string Summary,
     string Status, IReadOnlyList<Guid> RemediationTaskIds, string? ResolutionEvidence);
 public sealed record CompleteWorkDeliveryReviewRequest(Guid PlanId, Guid ExecutionId,

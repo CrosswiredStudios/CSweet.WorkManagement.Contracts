@@ -21,6 +21,10 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+# Keep root versioned release notes while ignoring release build artifacts.
+!/releases/
+/releases/*
+!/releases/*.md
 x64/
 x86/
 [Ww][Ii][Nn]32/
