@@ -413,7 +413,13 @@ public sealed record PersonalTodoWorkContext(
     Guid? CoordinationSessionId = null,
     string? SourceFingerprint = null,
     Guid? IssueId = null,
-    Guid? IssueCommissionId = null);
+    Guid? IssueCommissionId = null)
+{
+    /// <summary>Optional public intent marker. A purpose never grants access or execution.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Purpose { get; init; }
+}
+public static class PersonalWorkPurposes { public const string CollaborationTracking = "collaboration-tracking"; }
 
 public sealed record PersonalTodoItem(
     Guid Id,

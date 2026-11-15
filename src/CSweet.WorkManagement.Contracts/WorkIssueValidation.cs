@@ -3,6 +3,16 @@ namespace CSweet.WorkManagement.Contracts;
 /// <summary>Shared structural validation. Meaning, staffing and consultation choices remain with the manager.</summary>
 public static class WorkIssueValidation
 {
+    public static void Validate(DecideWorkIssueProposalRequest r)
+    {
+        ArgumentNullException.ThrowIfNull(r); Id(r.ProposalId); Text(r.Reason); Key(r.IdempotencyKey);
+        if (r.ExpectedRevision < 1) throw new ArgumentException("Read the current contribution revision.");
+        if (r.ReviewedIssues is { } reviewed) {
+            if (reviewed.Any(i => i is null) || reviewed.Select(i => i.ObligationKey).Distinct().Count() != reviewed.Count) throw new ArgumentException("Review each obligation once.");
+            foreach (var item in reviewed) { Key(item.ObligationKey); if (item.IssueId.HasValue) Id(item.IssueId.Value);
+                if (item.IssueId.HasValue != item.Revision.HasValue || item.Revision < 1) throw new ArgumentException("Bind each reviewed issue identity and revision together."); }
+        }
+    }
     public static void Validate(ReadWorkIssuesRequest r)
     {
         ArgumentNullException.ThrowIfNull(r);

@@ -9,6 +9,7 @@ public sealed class WorkIssueValidationTests
         var content = string.Concat(Enumerable.Repeat("Complete finding and evidence. ", 20000));
         WorkIssueValidation.Validate(new ReconcileWorkIssuesRequest(Guid.NewGuid(), Source,
             [new("opaque-obligation", content, content, []) { BriefTitle = "A concise responsibility", BriefSummary = "The manager owns resolution." }], "write"));
+        WorkIssueValidation.Validate(new DecideWorkIssueProposalRequest(Guid.NewGuid(), 1, true, content, "owner-decision"));
         WorkIssueValidation.Validate(new CommissionWorkIssuesRequest(Guid.NewGuid(), Guid.NewGuid(), [Guid.NewGuid()], Source, content, "commission"));
     }
     [Fact]

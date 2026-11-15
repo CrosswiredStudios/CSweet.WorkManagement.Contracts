@@ -6,7 +6,9 @@ public static class WorkIssueCapabilities
     public const string Read = "work.issues.read.v1";
     public const string Reconcile = "work.issues.reconcile.v1";
     public const string Commission = "work.issues.commission.v1";
-    public static IReadOnlyList<string> All { get; } = [Read, Reconcile, Commission];
+    public const string Propose = "work.issues.propose.v1";
+    public const string DecideProposal = "work.issues.proposal.decide.v1";
+    public static IReadOnlyList<string> All { get; } = [Read, Reconcile, Commission, Propose, DecideProposal];
 }
 public static class WorkIssueEvents { public const string Changed = "work.issues.changed.v1"; }
 
@@ -38,9 +40,26 @@ public sealed record WorkIssueCaseResponse(Guid Id, Guid BoardId, Guid Workstrea
     public string? BriefSummary { get; init; }
 }
 public sealed record WorkIssueCommissionResponse(Guid Id, Guid BoardId, Guid TargetEmployeeId, IReadOnlyList<Guid> IssueIds,
-    WorkApprovedSource Source, string Status, Guid? SessionId, string? Failure, long Revision);
+    WorkApprovedSource Source, string Status, Guid? SessionId, string? Failure, long Revision)
+{
+    public Guid? RequestedByEmployeeId { get; init; }
+    public string? DecisionReason { get; init; }
+    /// <summary>Private consultation provenance, returned only to its original contributing participant.</summary>
+    public IReadOnlyList<Guid>? OriginSessionIds { get; init; }
+    public IReadOnlyList<WorkIssueUpdate>? ProposedChanges { get; init; }
+}
 public sealed record WorkIssueDirectory(IReadOnlyList<WorkIssueCaseResponse> Issues,
-    IReadOnlyList<WorkIssueCommissionResponse> Commissions, bool HasMore = false);
+    IReadOnlyList<WorkIssueCommissionResponse> Commissions, bool HasMore = false)
+{
+    public bool? CanReconcile { get; init; }
+    public Guid? AccountableEmployeeId { get; init; }
+}
+public sealed record WorkIssueRevisionReference(string ObligationKey, Guid? IssueId, long? Revision);
+public sealed record DecideWorkIssueProposalRequest(Guid ProposalId, long ExpectedRevision, bool Accept, string Reason, string IdempotencyKey)
+{
+    /// <summary>Current records shown to the owner for this judgment. Omit only when using the original proposal's revision bindings.</summary>
+    public IReadOnlyList<WorkIssueRevisionReference>? ReviewedIssues { get; init; }
+}
 public sealed record CommissionWorkIssuesRequest(Guid BoardId, Guid TargetEmployeeId, IReadOnlyList<Guid> IssueIds,
     WorkApprovedSource Source, string Question, string IdempotencyKey)
 {
