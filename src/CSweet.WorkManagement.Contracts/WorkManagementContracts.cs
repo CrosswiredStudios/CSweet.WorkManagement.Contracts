@@ -411,7 +411,9 @@ public sealed record PersonalTodoWorkContext(
     Guid? GateId = null,
     Guid? DecisionId = null,
     Guid? CoordinationSessionId = null,
-    string? SourceFingerprint = null);
+    string? SourceFingerprint = null,
+    Guid? IssueId = null,
+    Guid? IssueCommissionId = null);
 
 public sealed record PersonalTodoItem(
     Guid Id,
