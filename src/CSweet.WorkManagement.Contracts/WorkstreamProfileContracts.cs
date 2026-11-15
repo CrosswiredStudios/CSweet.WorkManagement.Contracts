@@ -408,7 +408,12 @@ public sealed record DecisionRecord(
     long Revision,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    JsonElement? TypeData = null);
+    JsonElement? TypeData = null)
+{
+    /// <summary>Platform-owned authorship; absent on older hosts. Never supplied by a model.</summary>
+    public Guid? RequestedByOrganizationUserId { get; init; }
+    public Guid? DecidedByOrganizationUserId { get; init; }
+}
 
 public static class ReviewFindingSeverities
 {

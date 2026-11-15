@@ -1,5 +1,7 @@
 # C-Sweet Work Management Contracts
 
+Version 5.9.0 adds platform-owned requester and decider identities to decision reads. Older responses remain readable with unknown authorship.
+
 Version 5.8.0 adds source-bound issue cases, durable commissions, explicit evidence relationships, recurrence history and shared structural validation. Existing payloads remain compatible through optional fields.
 
 Version 5.7.0 adds exact planning-input reconciliation, attributable effort assessments, actionable readiness owners, multi-source corrective bindings, and evidence-bound final-product completion. See [release notes](releases/5.7.0.md).
