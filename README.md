@@ -1,5 +1,7 @@
 # C-Sweet Work Management Contracts
 
+Version 5.11.0 adds optional exact dependency references to personal-work waits and defer commands. Existing waits remain readable. See [release notes](releases/5.11.0.md).
+
 Version 5.10.0 adds source-bound owner contributions, current operation recovery facts and an optional public collaboration-tracking purpose. Existing commands and records remain readable.
 
 Version 5.8.0 adds source-bound issue cases, durable commissions, explicit evidence relationships, recurrence history and shared structural validation. Existing payloads remain compatible through optional fields.

@@ -399,7 +399,19 @@ public sealed record PersonalTodoMention(
 public sealed record PersonalTodoWaitState(
     DateTimeOffset NextReviewAt,
     string Reason,
-    Guid? WaitingOnOrganizationUserId = null);
+    Guid? WaitingOnOrganizationUserId = null)
+{
+    /// <summary>Exact authorized resource state awaited by this work. Notifications are only wake hints.</summary>
+    public PersonalTodoDependency? Dependency { get; init; }
+}
+
+/// <summary>A durable dependency reference, independent of agent identity, SDK inheritance or reason wording.</summary>
+public sealed record PersonalTodoDependency(string Kind, Guid ResourceId, string ObservedVersion);
+
+public static class PersonalTodoDependencyKinds
+{
+    public const string ResourceChange = "resource-change.v1";
+}
 
 /// <summary>Optional authoritative source links for a personal management commitment.</summary>
 public sealed record PersonalTodoWorkContext(
@@ -570,7 +582,10 @@ public sealed record DeferPersonalTodoItemRequest(
     DateTimeOffset NextReviewAt,
     string Reason,
     Guid? WaitingOnOrganizationUserId,
-    string IdempotencyKey);
+    string IdempotencyKey)
+{
+    public PersonalTodoDependency? Dependency { get; init; }
+}
 
 public sealed record PersonalTodoAvailableEvent(
     Guid OwnerOrganizationUserId,
