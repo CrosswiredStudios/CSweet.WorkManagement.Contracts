@@ -365,7 +365,10 @@ public static class DecisionStatuses
     public const string Superseded = "Superseded";
 }
 
-public sealed record DecisionOption(string Id, string Label, string? Description);
+public sealed record DecisionOption(string Id, string Label, string? Description)
+{
+    public string? Impact { get; init; }
+}
 
 public sealed record DecisionRequest(
     Guid WorkstreamId,

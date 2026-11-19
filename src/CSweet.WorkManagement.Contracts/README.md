@@ -1,5 +1,7 @@
 # C-Sweet Work Management Contracts
 
+Version 5.12.0 adds an optional plain-English impact to decision options.
+
 Version 5.11.0 adds optional `PersonalTodoDependency` references to waits and defer commands. The platform reconciles authorized current resource state without relying on notification delivery or wait-message wording. Existing waits remain readable.
 
 Version 5.10.0 adds source-bound owner contributions, current operation recovery facts and an optional public collaboration-tracking purpose. Existing commands and records remain readable.
