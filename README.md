@@ -1,6 +1,6 @@
 # C-Sweet Work Management Contracts
 
-Version 5.12.0 adds an optional plain-English impact to decision options. [Release notes](releases/5.12.0.md)
+Version 5.13.0 lets a work retry wake its owner to reconcile changed inputs before resuming a linked collaboration. [Release notes](releases/5.13.0.md)
 
 Version 5.11.0 adds optional exact dependency references to personal-work waits and defer commands. Existing waits remain readable. See [release notes](releases/5.11.0.md).
 

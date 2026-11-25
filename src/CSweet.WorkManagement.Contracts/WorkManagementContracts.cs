@@ -533,7 +533,12 @@ public sealed record ReorderPersonalTodoItemRequest(
 public sealed record RequeuePersonalTodoItemRequest(
     Guid ItemId,
     long ExpectedRevision,
-    string IdempotencyKey);
+    string IdempotencyKey)
+{
+    /// <summary>Wake the existing owner to reconcile changed inputs before retrying a linked collaboration.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ReconcileOnly { get; init; }
+}
 
 public sealed record ClaimPersonalTodoItemRequest(
     Guid EventId,
